@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTI Spatial Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); min-height: 100vh; color: #1e293b; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; }
+        
+        .nav-tabs { display: flex; gap: 12px; background: rgba(255, 255, 255, 0.8); padding: 8px; border-radius: 99px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.8); }
+        .tab-btn { padding: 12px 28px; border-radius: 99px; border: none; background: transparent; color: #64748b; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .tab-btn.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.4); }
+
+        .studio-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-radius: 28px; padding: 40px; max-width: 1100px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.6); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .hero-title { font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+        .hero-title span { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-description { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 24px; }
+        
+        .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 12px 28px; border-radius: 99px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4); margin-bottom: 20px; }
+        
+        .kernel-section { margin-top: 15px; background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .preset-select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 600; margin-bottom: 15px; }
+        .kernel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 0 auto; }
+        .kernel-grid input { width: 100%; height: 42px; text-align: center; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 700; background: white; }
+
+        .preview-container { background: #ffffff; border-radius: 20px; padding: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 15px; border: 1px solid #f1f5f9; }
+        .img-box { position: relative; width: 100%; height: 240px; border-radius: 14px; overflow: hidden; background-color: #f8fafc; display: flex; align-items: center; justify-content: center; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .badge { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); color: white; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+        .status-loader { font-size: 13px; font-weight: 600; color: #6366f1; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('grayscaleTab', this)">Grayscale Converter</button>
+        <button class="tab-btn" onclick="switchTab('blurSharpenTab', this)">Blur & Sharpen Suite</button>
+    </div>
+
+    <div class="studio-card">
+        
+        <div>
+            <!-- TAB 1: Grayscale Controls -->
+            <div id="grayscaleTab" class="tab-content active">
+                <h1 class="hero-title">Instant <span>Grayscale</span> Studio</h1>
+                <p class="hero-description">Convert colorful RGB images to monochromatic grayscale using weighted luminance formula.</p>
+                <input type="file" id="grayInput" accept="image/*" style="display:none;" onchange="handleGrayscaleUpload()">
+                <button class="btn-primary" onclick="document.getElementById('grayInput').click()">Upload Image</button>
+            </div>
+
+            <!-- TAB 2: Blur & Sharpen Controls -->
+            <div id="blurSharpenTab" class="tab-content">
+                <h1 class="hero-title">Spatial <span>Convolution</span> Suite</h1>
+                <p class="hero-description">Apply custom 2D spatial convolution for Gaussian blur, average blur, and Laplacian sharpening.</p>
+                <input type="file" id="convInput" accept="image/*" style="display:none;" onchange="handleConvUpload()">
+                <button class="btn-primary" onclick="document.getElementById('convInput').click()">Upload Image</button>
+
+                <div class="kernel-section">
+                    <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:6px;">PRESET KERNEL</label>
+                    <select id="presetSelect" class="preset-select" onchange="loadPreset()">
+                        <option value="custom">Custom Matrix Editor</option>
+                        <option value="gaussian">Gaussian Blur (3x3)</option>
+                        <option value="average">Average Box Blur</option>
+                        <option value="laplacian">Laplacian Sharpening</option>
+                    </select>
+
+                    <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:8px;">EDIT 3x3 KERNEL MATRIX</label>
+                    <div class="kernel-grid">
+                        <input type="number" step="any" id="k00" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k01" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k02" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k10" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k11" value="1" oninput="applyFilter()">
+                        <input type="number" step="any" id="k12" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k20" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k21" value="0" oninput="applyFilter()">
+                        <input type="number" step="any" id="k22" value="0" oninput="applyFilter()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Side-by-Side Image Preview -->
+        <div class="preview-container">
+            <div class="img-box">
+                <span class="badge">Original Image</span>
+                <span id="origPlaceholder" class="status-loader">No Image</span>
+                <img id="originalPreview" style="display: none;">
+            </div>
+            <div class="img-box">
+                <span class="badge">Processed Output</span>
+                <span id="outputPlaceholder" class="status-loader">Output will appear here</span>
+                <img id="processedPreview" style="display: none;">
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let grayFile = null;
+        let convFile = null;
+
+        const presets = {
+            gaussian: [[0.0625, 0.125, 0.0625], [0.125, 0.25, 0.125], [0.0625, 0.125, 0.0625]],
+            average: [[0.111, 0.111, 0.111], [0.111, 0.111, 0.111], [0.111, 0.111, 0.111]],
+            laplacian: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]]
+        };
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+            
+            resetPreviews();
+        }
+
+        function resetPreviews() {
+            document.getElementById('originalPreview').style.display = 'none';
+            document.getElementById('processedPreview').style.display = 'none';
+            document.getElementById('origPlaceholder').style.display = 'block';
+            document.getElementById('origPlaceholder').innerText = 'No Image';
+            document.getElementById('outputPlaceholder').style.display = 'block';
+            document.getElementById('outputPlaceholder').innerText = 'Output will appear here';
+        }
+
+        async function handleGrayscaleUpload() {
+            const input = document.getElementById('grayInput');
+            if (input.files && input.files[0]) {
+                grayFile = input.files[0];
+                showOriginal(grayFile);
+                
+                document.getElementById('outputPlaceholder').style.display = 'block';
+                document.getElementById('outputPlaceholder').innerText = 'Processing Grayscale...';
+
+                const formData = new FormData();
+                formData.append('image', grayFile);
+
+                try {
+                    const response = await fetch('/api/grayscale', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    if (data.grayscale_image) {
+                        showOutput(data.grayscale_image);
+                    }
+                } catch (e) {
+                    alert("Error processing image!");
+                }
+            }
+        }
+
+        function handleConvUpload() {
+            const input = document.getElementById('convInput');
+            if (input.files && input.files[0]) {
+                convFile = input.files[0];
+                showOriginal(convFile);
+                applyFilter();
+            }
+        }
+
+        function loadPreset() {
+            const val = document.getElementById('presetSelect').value;
+            if (presets[val]) {
+                const p = presets[val];
+                document.getElementById('k00').value = p[0][0]; document.getElementById('k01').value = p[0][1]; document.getElementById('k02').value = p[0][2];
+                document.getElementById('k10').value = p[1][0]; document.getElementById('k11').value = p[1][1]; document.getElementById('k12').value = p[1][2];
+                document.getElementById('k20').value = p[2][0]; document.getElementById('k21').value = p[2][1]; document.getElementById('k22').value = p[2][2];
+                applyFilter();
+            }
+        }
+
+        function getKernelValues() {
+            return [
+                [parseFloat(document.getElementById('k00').value)||0, parseFloat(document.getElementById('k01').value)||0, parseFloat(document.getElementById('k02').value)||0],
+                [parseFloat(document.getElementById('k10').value)||0, parseFloat(document.getElementById('k11').value)||0, parseFloat(document.getElementById('k12').value)||0],
+                [parseFloat(document.getElementById('k20').value)||0, parseFloat(document.getElementById('k21').value)||0, parseFloat(document.getElementById('k22').value)||0]
+            ];
+        }
+
+        async function applyFilter() {
+            if (!convFile) {
+                alert("Please click 'Upload Image' first to select a photo!");
+                return;
+            }
+
+            document.getElementById('outputPlaceholder').style.display = 'block';
+            document.getElementById('outputPlaceholder').innerText = 'Applying Convolution...';
+
+            const kernel = getKernelValues();
+            const formData = new FormData();
+            formData.append('image', convFile);
+            formData.append('kernel', JSON.stringify(kernel));
+
+            try {
+                const response = await fetch('/api/convolve', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.output_image) {
+                    showOutput(data.output_image);
+                }
+            } catch (e) {
+                alert("Error executing convolution!");
+            }
+        }
+
+        function showOriginal(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const origImg = document.getElementById('originalPreview');
+                origImg.src = e.target.result;
+                origImg.style.display = 'block';
+                document.getElementById('origPlaceholder').style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function showOutput(base64Str) {
+            const outImg = document.getElementById('processedPreview');
+            outImg.src = base64Str;
+            outImg.style.display = 'block';
+            document.getElementById('outputPlaceholder').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
