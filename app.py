@@ -51,5 +51,34 @@ def handle_convolve():
         print(f"Convolution Error: {e}") # Terminal print for debugging
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/edges', methods=['POST'])
+def handle_edges():
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image uploaded'}), 400
+
+        operator = request.form.get('operator', 'sobel').lower()
+        np_img = np.frombuffer(request.files['image'].read(), np.uint8)
+        img = cv2.imdecode(np_img, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            return jsonify({'error': 'Unable to decode image'}), 400
+
+        if len(img.shape) == 3 and img.shape[2] >= 3:
+            img = cv2.cvtColor(img[..., :3], cv2.COLOR_BGR2RGB)
+
+        edge_maps = dsp_engine.detect_edges(img, operator)
+        results = {}
+        for name, result in edge_maps.items():
+            results[name] = {
+                'image': dsp_engine.array_to_base64(result['image']),
+                'mean_strength': result['mean_strength'],
+                'max_strength': result['max_strength'],
+                'edge_pixels': result['edge_pixels'],
+            }
+        return jsonify({'operator': operator, 'results': results})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

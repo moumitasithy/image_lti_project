@@ -70,3 +70,67 @@ def apply_custom_kernel(img_array, kernel):
     if len(img_array.shape) == 3 and img_array.shape[2] == 4:
         img_array = img_array[..., :3]
     return custom_2d_convolution(img_array, kernel)
+
+
+EDGE_KERNELS = {
+    'sobel': {
+        'horizontal': [[-1, -2, -1], [0, 0, 0], [1, 2, 1]],
+        'vertical': [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]],
+    },
+    'prewitt': {
+        'horizontal': [[-1, -1, -1], [0, 0, 0], [1, 1, 1]],
+        'vertical': [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]],
+    },
+    'laplacian': {
+        'horizontal': [[0, 0, 0], [1, -2, 1], [0, 0, 0]],
+        'vertical': [[0, 1, 0], [0, -2, 0], [0, 1, 0]],
+    },
+}
+
+
+def _convolve_float(img_array, kernel):
+    """Return the signed convolution response before display normalization."""
+    kernel = np.asarray(kernel, dtype=np.float32)
+    pad_h, pad_w = kernel.shape[0] // 2, kernel.shape[1] // 2
+    padded = np.pad(img_array.astype(np.float32),
+                    ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
+    output = np.zeros(img_array.shape, dtype=np.float32)
+    for i in range(kernel.shape[0]):
+        for j in range(kernel.shape[1]):
+            output += padded[i:i + img_array.shape[0], j:j + img_array.shape[1]] * kernel[i, j]
+    return output
+
+
+def _normalize_edge(response):
+    strength = np.abs(response)
+    maximum = float(strength.max())
+    if maximum == 0:
+        return np.zeros_like(strength, dtype=np.uint8), strength
+    return np.clip(strength * 255.0 / maximum, 0, 255).astype(np.uint8), strength
+
+
+def detect_edges(img_array, operator='sobel'):
+    """Create horizontal, vertical, and combined normalized edge maps."""
+    if operator not in EDGE_KERNELS:
+        raise ValueError(f'Unsupported edge operator: {operator}')
+
+    gray_img = convert_to_grayscale(img_array)
+    kernels = EDGE_KERNELS[operator]
+    horizontal_response = _convolve_float(gray_img, kernels['horizontal'])
+    vertical_response = _convolve_float(gray_img, kernels['vertical'])
+    combined_response = np.sqrt(horizontal_response ** 2 + vertical_response ** 2)
+
+    maps = {}
+    for name, response in (
+        ('horizontal', horizontal_response),
+        ('vertical', vertical_response),
+        ('combined', combined_response),
+    ):
+        image, strength = _normalize_edge(response)
+        maps[name] = {
+            'image': image,
+            'mean_strength': round(float(strength.mean()), 2),
+            'max_strength': round(float(strength.max()), 2),
+            'edge_pixels': round(float((image > 32).mean() * 100), 2),
+        }
+    return maps

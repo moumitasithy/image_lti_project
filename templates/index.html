@@ -33,6 +33,15 @@
         .img-box img { width: 100%; height: 100%; object-fit: cover; }
         .badge { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); color: white; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; }
         .status-loader { font-size: 13px; font-weight: 600; color: #6366f1; }
+        .edge-controls { margin-top: 15px; background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .edge-results { display: none; grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .edge-results.active { display: grid; }
+        .edge-card { background: #ffffff; border: 1px solid #f1f5f9; border-radius: 16px; padding: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .edge-card h3 { font-size: 13px; color: #334155; margin-bottom: 10px; }
+        .edge-card img { width: 100%; aspect-ratio: 1.4; object-fit: cover; border-radius: 10px; background: #0f172a; }
+        .metric-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 9px; font-size: 11px; color: #64748b; }
+        .metric-row strong { color: #0f172a; }
+        @media (max-width: 800px) { .studio-card { grid-template-columns: 1fr; padding: 24px; } .edge-results { grid-template-columns: 1fr; } .nav-tabs { flex-wrap: wrap; justify-content: center; } }
     </style>
 </head>
 <body>
@@ -40,6 +49,7 @@
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('grayscaleTab', this)">Grayscale Converter</button>
         <button class="tab-btn" onclick="switchTab('blurSharpenTab', this)">Blur & Sharpen Suite</button>
+        <button class="tab-btn" onclick="switchTab('edgeTab', this)">Edge Detector</button>
     </div>
 
     <div class="studio-card">
@@ -83,6 +93,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TAB 3: Directional Edge Controls -->
+            <div id="edgeTab" class="tab-content">
+                <h1 class="hero-title">Structural <span>Edge Maps</span></h1>
+                <p class="hero-description">Compare horizontal, vertical, and combined edge strength using classic directional convolution operators.</p>
+                <input type="file" id="edgeInput" accept="image/*" style="display:none;" onchange="handleEdgeUpload()">
+                <button class="btn-primary" onclick="document.getElementById('edgeInput').click()">Upload Image</button>
+
+                <div class="edge-controls">
+                    <label for="edgeOperator" style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:6px;">EDGE OPERATOR</label>
+                    <select id="edgeOperator" class="preset-select" onchange="applyEdges()">
+                        <option value="sobel">Sobel</option>
+                        <option value="prewitt">Prewitt</option>
+                        <option value="laplacian">Laplacian</option>
+                    </select>
+                    <p style="font-size:12px; color:#64748b; line-height:1.5;">Maps are normalized independently for clear structural comparison.</p>
+                </div>
+            </div>
         </div>
 
         <!-- Right Side: Side-by-Side Image Preview -->
@@ -99,11 +127,18 @@
             </div>
         </div>
 
+        <div id="edgeResults" class="edge-results">
+            <div class="edge-card"><h3>Horizontal Edges</h3><img id="horizontalEdge"><div id="horizontalMetrics" class="metric-row"></div></div>
+            <div class="edge-card"><h3>Vertical Edges</h3><img id="verticalEdge"><div id="verticalMetrics" class="metric-row"></div></div>
+            <div class="edge-card"><h3>Combined Strength</h3><img id="combinedEdge"><div id="combinedMetrics" class="metric-row"></div></div>
+        </div>
+
     </div>
 
     <script>
         let grayFile = null;
         let convFile = null;
+        let edgeFile = null;
 
         const presets = {
             gaussian: [[0.0625, 0.125, 0.0625], [0.125, 0.25, 0.125], [0.0625, 0.125, 0.0625]],
@@ -128,6 +163,7 @@
             document.getElementById('origPlaceholder').innerText = 'No Image';
             document.getElementById('outputPlaceholder').style.display = 'block';
             document.getElementById('outputPlaceholder').innerText = 'Output will appear here';
+            document.getElementById('edgeResults').classList.remove('active');
         }
 
         async function handleGrayscaleUpload() {
@@ -160,6 +196,40 @@
                 convFile = input.files[0];
                 showOriginal(convFile);
                 applyFilter();
+            }
+        }
+
+        function handleEdgeUpload() {
+            const input = document.getElementById('edgeInput');
+            if (input.files && input.files[0]) {
+                edgeFile = input.files[0];
+                showOriginal(edgeFile);
+                applyEdges();
+            }
+        }
+
+        async function applyEdges() {
+            if (!edgeFile) return;
+
+            document.getElementById('edgeResults').classList.add('active');
+            document.getElementById('outputPlaceholder').style.display = 'block';
+            document.getElementById('outputPlaceholder').innerText = 'Detecting directional edges...';
+            const formData = new FormData();
+            formData.append('image', edgeFile);
+            formData.append('operator', document.getElementById('edgeOperator').value);
+
+            try {
+                const response = await fetch('/api/edges', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Edge detection failed');
+                ['horizontal', 'vertical', 'combined'].forEach(name => {
+                    const result = data.results[name];
+                    document.getElementById(`${name}Edge`).src = result.image;
+                    document.getElementById(`${name}Metrics`).innerHTML = `Mean <strong>${result.mean_strength}</strong> | Max <strong>${result.max_strength}</strong> | Pixels <strong>${result.edge_pixels}%</strong>`;
+                });
+                document.getElementById('outputPlaceholder').style.display = 'none';
+            } catch (e) {
+                document.getElementById('outputPlaceholder').innerText = e.message;
             }
         }
 
