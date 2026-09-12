@@ -13,8 +13,23 @@
         .tab-btn { padding: 12px 28px; border-radius: 99px; border: none; background: transparent; color: #64748b; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
         .tab-btn.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.4); }
 
-        .studio-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-radius: 28px; padding: 40px; max-width: 1100px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.6); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-        .tab-content { display: none; }
+        /* Outer container fix so it never stretches beyond screen */
+        .studio-card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px); 
+            border-radius: 28px; 
+            padding: 40px; 
+            max-width: 1100px; 
+            width: 100%; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.06); 
+            border: 1px solid rgba(255,255,255,0.6); 
+            display: grid; 
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* Prevents grid children from forcing width expansion */
+            gap: 40px; 
+            align-items: start; 
+        }
+        
+        .tab-content { display: none; width: 100%; }
         .tab-content.active { display: block; }
 
         .hero-title { font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
@@ -23,15 +38,50 @@
         
         .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 12px 28px; border-radius: 99px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4); margin-bottom: 20px; }
         
-        .kernel-section { margin-top: 15px; background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; }
-        .preset-select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 600; margin-bottom: 15px; }
-        .kernel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 0 auto; }
-        .kernel-grid input { width: 100%; height: 42px; text-align: center; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 700; background: white; }
+        .kernel-section { margin-top: 15px; background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; width: 100%; }
+        .preset-select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 600; margin-bottom: 15px; outline: none; background: white; }
+        
+        .custom-size-box { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+        .custom-size-box input { width: 80px; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 700; text-align: center; outline: none; }
+        .custom-size-box button { background: #4f46e5; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        
+        /* Grid Container Restricted strictly within its parent width */
+        .grid-container-scroll { 
+            max-height: 250px; 
+            width: 100%; 
+            max-width: 100%;
+            overflow-x: auto; /* Force horizontal scroll within this box only */
+            overflow-y: auto; 
+            padding: 8px; 
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        
+        .kernel-grid { 
+            display: grid; 
+            gap: 4px; 
+            width: max-content; 
+        }
 
-        .preview-container { background: #ffffff; border-radius: 20px; padding: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 15px; border: 1px solid #f1f5f9; }
+        .kernel-grid input { 
+            width: 40px; 
+            height: 36px; 
+            text-align: center; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 6px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            background: white; 
+            outline: none; 
+            transition: border-color 0.2s; 
+        }
+        .kernel-grid input:focus { border-color: #6366f1; }
+
+        .preview-container { background: #ffffff; border-radius: 20px; padding: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 15px; border: 1px solid #f1f5f9; width: 100%; }
         .img-box { position: relative; width: 100%; height: 240px; border-radius: 14px; overflow: hidden; background-color: #f8fafc; display: flex; align-items: center; justify-content: center; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .badge { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); color: white; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+        .badge { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); color: white; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; z-index: 2; }
         .status-loader { font-size: 13px; font-weight: 600; color: #6366f1; }
         .edge-controls { margin-top: 15px; background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; }
         .edge-results { display: none; grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); gap: 15px; }
@@ -53,7 +103,6 @@
     </div>
 
     <div class="studio-card">
-        
         <div>
             <!-- TAB 1: Grayscale Controls -->
             <div id="grayscaleTab" class="tab-content active">
@@ -71,25 +120,23 @@
                 <button class="btn-primary" onclick="document.getElementById('convInput').click()">Upload Image</button>
 
                 <div class="kernel-section">
+                    <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:6px;">ANY KERNEL SIZE (N x N)</label>
+                    <div class="custom-size-box">
+                        <input type="number" id="customSizeInput" value="3" min="1" max="128">
+                        <button onclick="applyCustomKernelSize()">Set Grid Size</button>
+                    </div>
+
                     <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:6px;">PRESET KERNEL</label>
                     <select id="presetSelect" class="preset-select" onchange="loadPreset()">
                         <option value="custom">Custom Matrix Editor</option>
-                        <option value="gaussian">Gaussian Blur (3x3)</option>
+                        <option value="gaussian">Gaussian Blur</option>
                         <option value="average">Average Box Blur</option>
                         <option value="laplacian">Laplacian Sharpening</option>
                     </select>
 
-                    <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:8px;">EDIT 3x3 KERNEL MATRIX</label>
-                    <div class="kernel-grid">
-                        <input type="number" step="any" id="k00" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k01" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k02" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k10" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k11" value="1" oninput="applyFilter()">
-                        <input type="number" step="any" id="k12" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k20" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k21" value="0" oninput="applyFilter()">
-                        <input type="number" step="any" id="k22" value="0" oninput="applyFilter()">
+                    <label id="matrixLabel" style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:8px;">EDIT KERNEL MATRIX</label>
+                    <div class="grid-container-scroll">
+                        <div id="dynamicKernelGrid" class="kernel-grid"></div>
                     </div>
                 </div>
             </div>
@@ -132,19 +179,13 @@
             <div class="edge-card"><h3>Vertical Edges</h3><img id="verticalEdge"><div id="verticalMetrics" class="metric-row"></div></div>
             <div class="edge-card"><h3>Combined Strength</h3><img id="combinedEdge"><div id="combinedMetrics" class="metric-row"></div></div>
         </div>
-
     </div>
 
     <script>
         let grayFile = null;
         let convFile = null;
         let edgeFile = null;
-
-        const presets = {
-            gaussian: [[0.0625, 0.125, 0.0625], [0.125, 0.25, 0.125], [0.0625, 0.125, 0.0625]],
-            average: [[0.111, 0.111, 0.111], [0.111, 0.111, 0.111], [0.111, 0.111, 0.111]],
-            laplacian: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]]
-        };
+        let currentSize = 3;
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -164,6 +205,111 @@
             document.getElementById('outputPlaceholder').style.display = 'block';
             document.getElementById('outputPlaceholder').innerText = 'Output will appear here';
             document.getElementById('edgeResults').classList.remove('active');
+        }
+
+        function renderKernelGrid(size) {
+            currentSize = size;
+            const container = document.getElementById('dynamicKernelGrid');
+            document.getElementById('matrixLabel').innerText = `EDIT ${size}x${size} KERNEL MATRIX`;
+            
+            // Explicit 40px width per box ensures strict horizontal scrolling inside matrix box
+            container.style.gridTemplateColumns = `repeat(${size}, 40px)`;
+            container.innerHTML = '';
+
+            const center = Math.floor(size / 2);
+
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = 'any';
+                    input.id = `k_${i}_${j}`;
+                    input.value = (i === center && j === center) ? 1 : 0;
+                    input.oninput = function() {
+                        document.getElementById('presetSelect').value = 'custom';
+                        applyFilter();
+                    };
+                    container.appendChild(input);
+                }
+            }
+        }
+
+        function applyCustomKernelSize() {
+            const sizeVal = parseInt(document.getElementById('customSizeInput').value);
+            if (isNaN(sizeVal) || sizeVal < 1) {
+                alert("Please enter a valid positive number for matrix size.");
+                return;
+            }
+            renderKernelGrid(sizeVal);
+            loadPreset();
+        }
+
+        function getKernelValues() {
+            const kernel = [];
+            for (let i = 0; i < currentSize; i++) {
+                const row = [];
+                for (let j = 0; j < currentSize; j++) {
+                    const val = parseFloat(document.getElementById(`k_${i}_${j}`).value) || 0;
+                    row.push(val);
+                }
+                kernel.push(row);
+            }
+            return kernel;
+        }
+
+        // Dynamic NxN Math Generators for presets
+        function generateGaussianKernel(size, sigma = 1.0) {
+            const kernel = [];
+            const center = Math.floor(size / 2);
+            let sum = 0;
+
+            for (let i = 0; i < size; i++) {
+                const row = [];
+                for (let j = 0; j < size; j++) {
+                    const x = i - center;
+                    const y = j - center;
+                    const val = Math.exp(-(x * x + y * y) / (2 * sigma * sigma));
+                    row.push(val);
+                    sum += val;
+                }
+                kernel.push(row);
+            }
+            return kernel.map(row => row.map(val => parseFloat((val / sum).toFixed(4))));
+        }
+
+        function generateAverageKernel(size) {
+            const val = parseFloat((1 / (size * size)).toFixed(4));
+            return Array(size).fill(0).map(() => Array(size).fill(val));
+        }
+
+        function generateLaplacianKernel(size) {
+            const kernel = Array(size).fill(0).map(() => Array(size).fill(-1));
+            const center = Math.floor(size / 2);
+            kernel[center][center] = (size * size) - 1;
+            return kernel;
+        }
+
+        function loadPreset() {
+            const val = document.getElementById('presetSelect').value;
+            if (val === 'custom') return;
+
+            let matrix = [];
+            if (val === 'gaussian') {
+                const sigma = currentSize / 3;
+                matrix = generateGaussianKernel(currentSize, sigma);
+            } else if (val === 'average') {
+                matrix = generateAverageKernel(currentSize);
+            } else if (val === 'laplacian') {
+                matrix = generateLaplacianKernel(currentSize);
+            }
+
+            for (let i = 0; i < currentSize; i++) {
+                for (let j = 0; j < currentSize; j++) {
+                    document.getElementById(`k_${i}_${j}`).value = matrix[i][j];
+                }
+            }
+
+            if (convFile) applyFilter();
         }
 
         async function handleGrayscaleUpload() {
@@ -233,30 +379,8 @@
             }
         }
 
-        function loadPreset() {
-            const val = document.getElementById('presetSelect').value;
-            if (presets[val]) {
-                const p = presets[val];
-                document.getElementById('k00').value = p[0][0]; document.getElementById('k01').value = p[0][1]; document.getElementById('k02').value = p[0][2];
-                document.getElementById('k10').value = p[1][0]; document.getElementById('k11').value = p[1][1]; document.getElementById('k12').value = p[1][2];
-                document.getElementById('k20').value = p[2][0]; document.getElementById('k21').value = p[2][1]; document.getElementById('k22').value = p[2][2];
-                applyFilter();
-            }
-        }
-
-        function getKernelValues() {
-            return [
-                [parseFloat(document.getElementById('k00').value)||0, parseFloat(document.getElementById('k01').value)||0, parseFloat(document.getElementById('k02').value)||0],
-                [parseFloat(document.getElementById('k10').value)||0, parseFloat(document.getElementById('k11').value)||0, parseFloat(document.getElementById('k12').value)||0],
-                [parseFloat(document.getElementById('k20').value)||0, parseFloat(document.getElementById('k21').value)||0, parseFloat(document.getElementById('k22').value)||0]
-            ];
-        }
-
         async function applyFilter() {
-            if (!convFile) {
-                alert("Please click 'Upload Image' first to select a photo!");
-                return;
-            }
+            if (!convFile) return;
 
             document.getElementById('outputPlaceholder').style.display = 'block';
             document.getElementById('outputPlaceholder').innerText = 'Applying Convolution...';
@@ -294,6 +418,10 @@
             outImg.style.display = 'block';
             document.getElementById('outputPlaceholder').style.display = 'none';
         }
+
+        window.onload = function() {
+            renderKernelGrid(3);
+        };
     </script>
 </body>
 </html>
