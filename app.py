@@ -57,7 +57,7 @@ def handle_convolve():
             return jsonify({'error': 'No image uploaded'}), 400
         
         file = request.files['image']
-        # ডিফল্ট কার্নেল ছাড়া ডায়নামিক JSON লোড করা
+        
         kernel_str = request.form.get('kernel')
         kernel = json.loads(kernel_str)
 
