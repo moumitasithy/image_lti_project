@@ -4,102 +4,255 @@ import numpy as np
 import json
 import dsp_engine
 
+
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
+def decode_uploaded_image(file, mode=cv2.IMREAD_UNCHANGED):
+    """
+    Convert an uploaded image file into an OpenCV NumPy array.
+    Raises ValueError if the uploaded data is not a valid image.
+    """
+    file_bytes = file.read()
+
+    if not file_bytes:
+        raise ValueError('The uploaded image is empty')
+
+    np_image = np.frombuffer(file_bytes, dtype=np.uint8)
+    image = cv2.imdecode(np_image, mode)
+
+    if image is None:
+        raise ValueError('Unable to decode the uploaded image')
+
+    return image
+
+
+def convert_opencv_to_rgb(image):
+    """
+    OpenCV loads images in BGR/BGRA order.
+    Convert them to RGB/RGBA before sending them to dsp_engine.
+    """
+    if len(image.shape) != 3:
+        return image
+
+    channels = image.shape[2]
+
+    if channels == 3:
+        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    if channels == 4:
+        return cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA)
+
+    return image
+
+
+def validate_kernel(kernel_string):
+    """
+    Parse and validate a kernel received from the Visual Kernel Painter.
+    Only odd square kernels from 3x3 to 31x31 are accepted.
+    """
+    if not kernel_string:
+        raise ValueError('Kernel matrix is required')
+
+    try:
+        kernel_data = json.loads(kernel_string)
+        kernel = np.asarray(kernel_data, dtype=np.float32)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        raise ValueError('Kernel must be a valid numeric matrix')
+
+    if kernel.ndim != 2:
+        raise ValueError('Kernel must be a two-dimensional matrix')
+
+    rows, columns = kernel.shape
+
+    if rows != columns:
+        raise ValueError('Kernel must be square')
+
+    if rows < 3 or rows > 31:
+        raise ValueError(
+            'Kernel size must be between 3x3 and 31x31'
+        )
+
+    if rows % 2 == 0:
+        raise ValueError(
+            'Kernel size must be odd, such as 3x3, 5x5 or 7x7'
+        )
+
+    if not np.isfinite(kernel).all():
+        raise ValueError(
+            'Kernel contains an invalid or non-finite value'
+        )
+
+    if np.max(np.abs(kernel)) > 100:
+        raise ValueError(
+            'Kernel coefficients must remain between -100 and 100'
+        )
+
+    return kernel
+
+
 @app.route('/api/grayscale', methods=['POST'])
 def handle_grayscale():
     try:
         if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
-        
-        file = request.files['image']
-        np_img = np.frombuffer(file.read(), np.uint8)
-        img = cv2.imdecode(np_img, cv2.IMREAD_UNCHANGED)
-        
-        gray_img = dsp_engine.convert_to_grayscale(img)
-        base64_str = dsp_engine.array_to_base64(gray_img)
-        
-        return jsonify({'grayscale_image': base64_str})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            return jsonify({
+                'error': 'No image uploaded'
+            }), 400
 
-# @app.route('/api/convolve', methods=['POST'])
-# def handle_convolve():
-#     try:
-#         if 'image' not in request.files:
-#             return jsonify({'error': 'No image uploaded'}), 400
-        
-#         file = request.files['image']
-#         kernel_str = request.form.get('kernel', '[[0,0,0],[0,1,0],[0,0,0]]')
-#         kernel = json.loads(kernel_str)
+        image = decode_uploaded_image(
+            request.files['image'],
+            cv2.IMREAD_UNCHANGED
+        )
 
-#         np_img = np.frombuffer(file.read(), np.uint8)
-#         img = cv2.imdecode(np_img, cv2.IMREAD_COLOR) # Ensure BGR 3-channel
-        
-#         # Convert BGR to RGB for consistent processing
-#         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # convert_to_grayscale() expects RGB/RGBA ordering.
+        image = convert_opencv_to_rgb(image)
 
-#         output_img = dsp_engine.apply_custom_kernel(img_rgb, kernel)
-#         base64_str = dsp_engine.array_to_base64(output_img)
-        
-#         return jsonify({'output_image': base64_str})
-#     except Exception as e:
-#         print(f"Convolution Error: {e}") # Terminal print for debugging
-#         return jsonify({'error': str(e)}), 500
+        grayscale_image = dsp_engine.convert_to_grayscale(image)
+
+        base64_string = dsp_engine.array_to_base64(
+            grayscale_image
+        )
+
+        return jsonify({
+            'grayscale_image': base64_string
+        })
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+    except Exception as error:
+        app.logger.exception('Grayscale processing failed')
+
+        return jsonify({
+            'error': str(error)
+        }), 500
+
+
 @app.route('/api/convolve', methods=['POST'])
 def handle_convolve():
     try:
         if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
-        
-        file = request.files['image']
-        
-        kernel_str = request.form.get('kernel')
-        kernel = json.loads(kernel_str)
+            return jsonify({
+                'error': 'No image uploaded'
+            }), 400
 
-        np_img = np.frombuffer(file.read(), np.uint8)
-        img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # Receive and validate the matrix generated by Kernel Painter.
+        kernel = validate_kernel(
+            request.form.get('kernel')
+        )
 
-        output_img = dsp_engine.apply_custom_kernel(img_rgb, kernel)
-        base64_str = dsp_engine.array_to_base64(output_img)
-        
-        return jsonify({'output_image': base64_str})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        image = decode_uploaded_image(
+            request.files['image'],
+            cv2.IMREAD_COLOR
+        )
+
+        # IMREAD_COLOR produces a three-channel BGR image.
+        image_rgb = cv2.cvtColor(
+            image,
+            cv2.COLOR_BGR2RGB
+        )
+
+        output_image = dsp_engine.apply_custom_kernel(
+            image_rgb,
+            kernel
+        )
+
+        base64_string = dsp_engine.array_to_base64(
+            output_image
+        )
+
+        return jsonify({
+            'output_image': base64_string
+        })
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+    except Exception as error:
+        app.logger.exception('Convolution processing failed')
+
+        return jsonify({
+            'error': str(error)
+        }), 500
 
 
 @app.route('/api/edges', methods=['POST'])
 def handle_edges():
     try:
         if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
+            return jsonify({
+                'error': 'No image uploaded'
+            }), 400
 
-        operator = request.form.get('operator', 'sobel').lower()
-        np_img = np.frombuffer(request.files['image'].read(), np.uint8)
-        img = cv2.imdecode(np_img, cv2.IMREAD_UNCHANGED)
-        if img is None:
-            return jsonify({'error': 'Unable to decode image'}), 400
+        operator = request.form.get(
+            'operator',
+            'sobel'
+        ).lower()
 
-        if len(img.shape) == 3 and img.shape[2] >= 3:
-            img = cv2.cvtColor(img[..., :3], cv2.COLOR_BGR2RGB)
+        allowed_operators = {
+            'sobel',
+            'prewitt',
+            'laplacian'
+        }
 
-        edge_maps = dsp_engine.detect_edges(img, operator)
+        if operator not in allowed_operators:
+            return jsonify({
+                'error': 'Unsupported edge operator'
+            }), 400
+
+        image = decode_uploaded_image(
+            request.files['image'],
+            cv2.IMREAD_UNCHANGED
+        )
+
+        image = convert_opencv_to_rgb(image)
+
+        edge_maps = dsp_engine.detect_edges(
+            image,
+            operator
+        )
+
         results = {}
+
         for name, result in edge_maps.items():
             results[name] = {
-                'image': dsp_engine.array_to_base64(result['image']),
+                'image': dsp_engine.array_to_base64(
+                    result['image']
+                ),
                 'mean_strength': result['mean_strength'],
                 'max_strength': result['max_strength'],
-                'edge_pixels': result['edge_pixels'],
+                'edge_pixels': result['edge_pixels']
             }
-        return jsonify({'operator': operator, 'results': results})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+
+        return jsonify({
+            'operator': operator,
+            'results': results
+        })
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+    except Exception as error:
+        app.logger.exception('Edge detection failed')
+
+        return jsonify({
+            'error': str(error)
+        }), 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(
+        debug=True,
+        port=5000
+    )
