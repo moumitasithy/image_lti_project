@@ -96,6 +96,151 @@ def validate_kernel(kernel_string):
     return kernel
 
 
+# ---------------------------------------------------------------------------
+# Helpers used only by Feature 4 and Feature 5
+# ---------------------------------------------------------------------------
+
+
+def parse_float_field(name, default, minimum, maximum):
+    """Read and validate one finite floating-point form value."""
+    raw_value = request.form.get(name, str(default))
+
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        raise ValueError(f'{name} must be a number')
+
+    if not np.isfinite(value):
+        raise ValueError(f'{name} must be finite')
+
+    if value < minimum or value > maximum:
+        raise ValueError(
+            f'{name} must be between {minimum} and {maximum}'
+        )
+
+    return value
+
+
+def parse_odd_size(name='kernel_size', default=9):
+    """Read an odd kernel size between 3 and 31."""
+    raw_value = request.form.get(name, str(default))
+
+    try:
+        size = int(raw_value)
+    except (TypeError, ValueError):
+        raise ValueError(f'{name} must be an integer')
+
+    if size < 3 or size > 31 or size % 2 == 0:
+        raise ValueError(
+            f'{name} must be an odd integer between 3 and 31'
+        )
+
+    return size
+
+
+def create_gaussian_blur_kernel(size, sigma):
+    """Create a normalized two-dimensional Gaussian point-spread function."""
+    coordinates = np.arange(size, dtype=np.float32) - size // 2
+    x_grid, y_grid = np.meshgrid(coordinates, coordinates)
+
+    kernel = np.exp(
+        -(x_grid ** 2 + y_grid ** 2) /
+        (2.0 * sigma ** 2)
+    )
+
+    kernel_sum = float(kernel.sum())
+
+    if kernel_sum <= 0:
+        raise ValueError('Unable to create the Gaussian blur kernel')
+
+    return (kernel / kernel_sum).astype(np.float32)
+
+
+def create_motion_blur_kernel(size, angle):
+    """Create a normalized linear-motion point-spread function."""
+    mask = np.zeros((size, size), dtype=np.uint8)
+    center = size // 2
+    radius = center
+    radians = np.deg2rad(angle)
+
+    delta_x = int(round(np.cos(radians) * radius))
+    delta_y = int(round(np.sin(radians) * radius))
+
+    start = (center - delta_x, center - delta_y)
+    end = (center + delta_x, center + delta_y)
+
+    cv2.line(mask, start, end, color=255, thickness=1)
+
+    kernel = mask.astype(np.float32) / 255.0
+    kernel_sum = float(kernel.sum())
+
+    if kernel_sum <= 0:
+        raise ValueError('Unable to create the motion blur kernel')
+
+    return kernel / kernel_sum
+
+
+def get_restoration_kernel():
+    """Build or validate the blur model selected in Feature 5."""
+    kernel_type = request.form.get(
+        'kernel_type',
+        'gaussian'
+    ).lower()
+
+    if kernel_type == 'custom':
+        kernel = validate_kernel(
+            request.form.get('kernel')
+        )
+
+        # A blur point-spread function should not contain negative weights.
+        if np.any(kernel < -1e-8):
+            raise ValueError(
+                'A custom restoration kernel cannot contain negative weights'
+            )
+
+        kernel_sum = float(kernel.sum())
+
+        if abs(kernel_sum) < 1e-8:
+            raise ValueError(
+                'A custom restoration kernel must have a non-zero sum'
+            )
+
+        # Normalize defensively so small rounding errors do not change brightness.
+        return kernel_type, (kernel / kernel_sum).astype(np.float32)
+
+    size = parse_odd_size()
+
+    if kernel_type == 'gaussian':
+        sigma = parse_float_field(
+            'sigma',
+            default=2.0,
+            minimum=0.1,
+            maximum=20.0
+        )
+
+        return kernel_type, create_gaussian_blur_kernel(
+            size,
+            sigma
+        )
+
+    if kernel_type == 'motion':
+        angle = parse_float_field(
+            'angle',
+            default=0.0,
+            minimum=0.0,
+            maximum=180.0
+        )
+
+        return kernel_type, create_motion_blur_kernel(
+            size,
+            angle
+        )
+
+    raise ValueError(
+        'kernel_type must be gaussian, motion or custom'
+    )
+
+
 @app.route('/api/grayscale', methods=['POST'])
 def handle_grayscale():
     try:
@@ -245,6 +390,120 @@ def handle_edges():
 
     except Exception as error:
         app.logger.exception('Edge detection failed')
+
+        return jsonify({
+            'error': str(error)
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# Feature 4: Visual Kernel Laboratory
+# ---------------------------------------------------------------------------
+
+
+@app.route('/api/kernel-analysis', methods=['POST'])
+def handle_kernel_analysis():
+    try:
+        # Accept normal form data from index.html and JSON for easy API testing.
+        if request.is_json:
+            body = request.get_json(silent=True) or {}
+            kernel_value = body.get('kernel')
+            kernel_string = json.dumps(kernel_value)
+        else:
+            kernel_string = request.form.get('kernel')
+
+        kernel = validate_kernel(kernel_string)
+        analysis = dsp_engine.analyze_kernel(kernel)
+
+        response = {
+            'size': int(kernel.shape[0]),
+            'kernel_sum': analysis['kernel_sum'],
+            'dc_gain': analysis['dc_gain'],
+            'filter_type': analysis['filter_type'],
+            'symmetric': analysis['symmetric'],
+            'separable': analysis['separable'],
+            'frequency_response': dsp_engine.array_to_base64(
+                analysis['frequency_response']
+            )
+        }
+
+        if analysis.get('separable'):
+            response['vertical_vector'] = analysis[
+                'vertical_vector'
+            ]
+            response['horizontal_vector'] = analysis[
+                'horizontal_vector'
+            ]
+
+        return jsonify(response)
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+    except Exception as error:
+        app.logger.exception('Kernel analysis failed')
+
+        return jsonify({
+            'error': str(error)
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# Feature 5: Reverse Blur / Image Restoration
+# ---------------------------------------------------------------------------
+
+
+@app.route('/api/deconvolve', methods=['POST'])
+def handle_deconvolution():
+    try:
+        if 'image' not in request.files:
+            return jsonify({
+                'error': 'No blurred image uploaded'
+            }), 400
+
+        image = decode_uploaded_image(
+            request.files['image'],
+            cv2.IMREAD_COLOR
+        )
+
+        image_rgb = cv2.cvtColor(
+            image,
+            cv2.COLOR_BGR2RGB
+        )
+
+        kernel_type, blur_kernel = get_restoration_kernel()
+
+        balance = parse_float_field(
+            'balance',
+            default=0.01,
+            minimum=0.000001,
+            maximum=1.0
+        )
+
+        restored_image = dsp_engine.wiener_deconvolution(
+            image_rgb,
+            blur_kernel,
+            balance
+        )
+
+        return jsonify({
+            'restored_image': dsp_engine.array_to_base64(
+                restored_image
+            ),
+            'kernel_type': kernel_type,
+            'kernel_size': int(blur_kernel.shape[0]),
+            'balance': balance
+        })
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+    except Exception as error:
+        app.logger.exception('Image restoration failed')
 
         return jsonify({
             'error': str(error)

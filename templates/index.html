@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Add-only UI extension based on Pasted text(4).txt: Tools 01-03 preserved. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -98,6 +99,7 @@
                 ),
                 var(--sidebar);
             z-index: 20;
+            overflow-y: auto;
         }
 
         .brand {
@@ -1023,6 +1025,161 @@
             font-size: 10px;
         }
 
+        /* Visual Kernel Laboratory */
+
+        .analysis-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+
+        .analysis-card {
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            background: var(--surface-deep);
+        }
+
+        .analysis-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.65px;
+            text-transform: uppercase;
+        }
+
+        .analysis-card strong {
+            display: block;
+            margin-top: 5px;
+            color: var(--text);
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .lab-visual-grid {
+            padding: 18px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .lab-card {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: #0c1118;
+        }
+
+        .lab-card.wide {
+            grid-column: 1 / -1;
+        }
+
+        .lab-card-head {
+            min-height: 44px;
+            padding: 11px 13px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .lab-card-head strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .lab-card-head span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .analysis-canvas-wrap {
+            min-height: 270px;
+            padding: 14px;
+            display: grid;
+            place-items: center;
+            background: #090d13;
+        }
+
+        #labKernelCanvas,
+        #frequencyCanvas,
+        #labImageCanvas {
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            background: #080b10;
+        }
+
+        #labImageCanvas {
+            max-width: 760px;
+            max-height: 460px;
+            aspect-ratio: auto;
+            cursor: crosshair;
+        }
+
+        .equation-box {
+            padding: 14px;
+            color: #b9c5d4;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 11px;
+            line-height: 1.75;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .range-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-row input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .range-value {
+            min-width: 56px;
+            color: #c7c1ff;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .conditional-control.hidden-control {
+            display: none;
+        }
+
+        .validation-list {
+            margin-top: 12px;
+            display: grid;
+            gap: 7px;
+        }
+
+        .validation-item {
+            padding: 9px 10px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            color: var(--muted);
+            background: var(--surface-deep);
+            font-size: 10px;
+        }
+
+        .validation-item.pass {
+            border-color: rgba(37, 199, 159, 0.35);
+            color: #79dfc4;
+        }
+
+        .validation-item.fail {
+            border-color: rgba(220, 76, 100, 0.38);
+            color: #f092a3;
+        }
+
         /* Toast */
 
         .toast-stack {
@@ -1185,6 +1342,15 @@
                 padding: 0 12px 12px;
             }
 
+            .lab-visual-grid,
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lab-card.wide {
+                grid-column: auto;
+            }
+
             .apply-btn {
                 margin-left: 0;
             }
@@ -1281,6 +1447,42 @@
                     <small>Directional detection</small>
                 </span>
             </button>
+
+            <button class="tool-btn"
+                    data-tool="kernelLab"
+                    data-tab="kernelLabTab"
+                    type="button">
+                <span class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <path d="M4 18V6m0 12h16"/>
+                        <path d="m6 15 4-5 3 3 5-7"/>
+                        <circle cx="18" cy="6" r="1.5"/>
+                    </svg>
+                </span>
+                <span class="tool-copy">
+                    <strong>Visual Kernel Lab</strong>
+                    <small>Analyze &amp; explain</small>
+                </span>
+            </button>
+
+            <button class="tool-btn"
+                    data-tool="restoration"
+                    data-tab="restorationTab"
+                    type="button">
+                <span class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <path d="M4 12a8 8 0 1 0 2.3-5.7"/>
+                        <path d="M4 5v5h5"/>
+                        <path d="M9 12h6m-3-3v6"/>
+                    </svg>
+                </span>
+                <span class="tool-copy">
+                    <strong>Image Restoration</strong>
+                    <small>Reverse blur</small>
+                </span>
+            </button>
         </nav>
 
         <div class="sidebar-note">
@@ -1368,6 +1570,22 @@
                     <p>
                         Compare horizontal, vertical and combined responses
                         using classical edge operators.
+                    </p>
+                </article>
+
+                <article class="feature-card" data-open-tool="kernelLab">
+                    <strong>Visual Kernel Laboratory</strong>
+                    <p>
+                        Inspect a kernel's frequency response, DC gain,
+                        symmetry, separability and exact pixel calculation.
+                    </p>
+                </article>
+
+                <article class="feature-card" data-open-tool="restoration">
+                    <strong>Image Restoration</strong>
+                    <p>
+                        Recover detail from Gaussian or motion blur using
+                        regularized Wiener deconvolution.
                     </p>
                 </article>
             </div>
@@ -1669,6 +1887,210 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Visual Kernel Laboratory -->
+
+                <div id="kernelLabTab" class="tab-content">
+                    <div class="panel-head">
+                        <span class="tool-number">Tool 04</span>
+                        <h2>Visual Kernel Laboratory</h2>
+                        <p>
+                            Analyze the kernel currently designed in Blur &amp;
+                            Sharpen and inspect one convolution calculation.
+                        </p>
+                    </div>
+
+                    <div class="controls">
+                        <button id="refreshAnalysisBtn"
+                                class="primary-btn"
+                                type="button">
+                            Analyze Current Kernel
+                        </button>
+
+                        <div class="analysis-grid">
+                            <div class="analysis-card">
+                                <span>Filter class</span>
+                                <strong id="labFilterClass">Identity</strong>
+                            </div>
+                            <div class="analysis-card">
+                                <span>DC gain / sum</span>
+                                <strong id="labDcGain">1.0000</strong>
+                            </div>
+                            <div class="analysis-card">
+                                <span>Symmetry</span>
+                                <strong id="labSymmetry">Symmetric</strong>
+                            </div>
+                            <div class="analysis-card">
+                                <span>Separability</span>
+                                <strong id="labSeparable">Yes</strong>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="drop-zone"
+                                 data-input="labInput"
+                                 tabindex="0"
+                                 role="button">
+                                <div class="upload-icon">
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="1.8">
+                                        <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
+                                        <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>
+                                    </svg>
+                                </div>
+                                <strong>Upload an image for pixel inspection</strong>
+                                <span>Then click any pixel in the laboratory view</span>
+                                <span class="selected-file"
+                                      id="labFileName"></span>
+                            </div>
+                            <input class="hidden-input"
+                                   type="file"
+                                   id="labInput"
+                                   accept="image/*">
+                        </div>
+
+                        <div class="info-box">
+                            This page does not replace Feature 2. It reads the
+                            same painted kernel and explains its mathematical
+                            and frequency-domain behaviour.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Restoration -->
+
+                <div id="restorationTab" class="tab-content">
+                    <div class="panel-head">
+                        <span class="tool-number">Tool 05</span>
+                        <h2>Image Restoration</h2>
+                        <p>
+                            Approximately reverse Gaussian or motion blur with
+                            regularized Wiener deconvolution.
+                        </p>
+                    </div>
+
+                    <div class="controls">
+                        <div class="drop-zone"
+                             data-input="restoreInput"
+                             tabindex="0"
+                             role="button">
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.8">
+                                    <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
+                                    <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>
+                                </svg>
+                            </div>
+                            <strong>Upload a blurred image</strong>
+                            <span>PNG, JPG, JPEG or WebP</span>
+                            <span class="selected-file"
+                                  id="restoreFileName"></span>
+                        </div>
+                        <input class="hidden-input"
+                               type="file"
+                               id="restoreInput"
+                               accept="image/*">
+
+                        <div class="section">
+                            <div class="section-title">
+                                <label class="label" for="restoreKernelType">
+                                    Blur model
+                                </label>
+                            </div>
+                            <select id="restoreKernelType" class="select">
+                                <option value="gaussian">Gaussian blur</option>
+                                <option value="motion">Motion blur</option>
+                                <option value="custom">Painted kernel from Feature 2</option>
+                            </select>
+                        </div>
+
+                        <div id="restoreSizeControl" class="section conditional-control">
+                            <div class="section-title">
+                                <label class="label" for="restoreKernelSize">
+                                    Kernel size
+                                </label>
+                                <span class="hint">Odd sizes, 3–31</span>
+                            </div>
+                            <input id="restoreKernelSize"
+                                   class="input"
+                                   type="number"
+                                   min="3"
+                                   max="31"
+                                   step="2"
+                                   value="9">
+                        </div>
+
+                        <div id="restoreSigmaControl" class="section conditional-control">
+                            <div class="section-title">
+                                <label class="label" for="restoreSigma">
+                                    Gaussian sigma
+                                </label>
+                            </div>
+                            <div class="range-row">
+                                <input id="restoreSigma"
+                                       type="range"
+                                       min="0.5"
+                                       max="8"
+                                       step="0.1"
+                                       value="2">
+                                <span id="restoreSigmaValue"
+                                      class="range-value">2.0</span>
+                            </div>
+                        </div>
+
+                        <div id="restoreMotionControl"
+                             class="section conditional-control hidden-control">
+                            <div class="section-title">
+                                <label class="label" for="restoreAngle">
+                                    Motion angle
+                                </label>
+                            </div>
+                            <div class="range-row">
+                                <input id="restoreAngle"
+                                       type="range"
+                                       min="0"
+                                       max="180"
+                                       step="1"
+                                       value="0">
+                                <span id="restoreAngleValue"
+                                      class="range-value">0°</span>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-title">
+                                <label class="label" for="restoreBalance">
+                                    Noise control K
+                                </label>
+                                <span class="hint">Higher = less noise amplification</span>
+                            </div>
+                            <div class="range-row">
+                                <input id="restoreBalance"
+                                       type="range"
+                                       min="0.0001"
+                                       max="0.05"
+                                       step="0.0001"
+                                       value="0.01">
+                                <span id="restoreBalanceValue"
+                                      class="range-value">0.0100</span>
+                            </div>
+                        </div>
+
+                        <button id="restoreBtn"
+                                class="primary-btn section"
+                                type="button">
+                            Restore Image
+                        </button>
+
+                        <div id="restoreValidation"
+                             class="validation-list"></div>
+
+                        <div class="info-box">
+                            Best results require the selected blur model to be
+                            close to the blur that originally degraded the image.
+                        </div>
+                    </div>
+                </div>
             </article>
 
             <!-- Preview panel -->
@@ -1676,7 +2098,7 @@
             <article class="panel preview-panel">
                 <header class="preview-toolbar">
                     <div>
-                        <h2>Visual Comparison</h2>
+                        <h2 id="previewHeading">Visual Comparison</h2>
                         <p id="previewStatus">Choose an image to begin</p>
                     </div>
 
@@ -1697,7 +2119,7 @@
                     </div>
                 </header>
 
-                <div class="preview-grid">
+                <div id="standardPreview" class="preview-grid">
                     <div class="image-card">
                         <div class="image-card-head">
                             <span class="image-label">
@@ -1756,6 +2178,45 @@
                     </div>
                 </div>
 
+                <div id="kernelLabVisuals" class="lab-visual-grid hidden">
+                    <section class="lab-card">
+                        <div class="lab-card-head">
+                            <strong>Spatial Kernel</strong>
+                            <span>Signed coefficient heatmap</span>
+                        </div>
+                        <div class="analysis-canvas-wrap">
+                            <canvas id="labKernelCanvas"
+                                    width="420"
+                                    height="420"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="lab-card">
+                        <div class="lab-card-head">
+                            <strong>Frequency Response</strong>
+                            <span>Bright regions indicate frequencies that pass</span>
+                        </div>
+                        <div class="analysis-canvas-wrap">
+                            <canvas id="frequencyCanvas"
+                                    width="192"
+                                    height="192"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="lab-card wide">
+                        <div class="lab-card-head">
+                            <strong>Pixel Convolution Microscope</strong>
+                            <span>Click the image to calculate one output pixel</span>
+                        </div>
+                        <div class="analysis-canvas-wrap">
+                            <canvas id="labImageCanvas"
+                                    width="760"
+                                    height="420"></canvas>
+                        </div>
+                        <pre id="pixelEquation" class="equation-box">Upload an image, then click a pixel to inspect the multiplication and sum.</pre>
+                    </section>
+                </div>
+
                 <div id="edgeResults" class="edge-results">
                     <div class="edge-card">
                         <h3>Horizontal Edges</h3>
@@ -1798,6 +2259,9 @@
         grayFile: null,
         convFile: null,
         edgeFile: null,
+        labFile: null,
+        restoreFile: null,
+        labImageData: null,
 
         currentSize: 3,
         kernelMatrix: [],
@@ -1843,6 +2307,8 @@
         if (tool === "home") {
             $("homeView").classList.remove("hidden");
             $("workspaceView").classList.add("hidden");
+            $("standardPreview").classList.remove("hidden");
+            $("kernelLabVisuals").classList.add("hidden");
             $("pageTitle").textContent = "EYE MAZE Studio";
             resetPreviewsOnly();
             return;
@@ -1866,19 +2332,40 @@
         const titles = {
             grayscale: "Grayscale Workspace",
             convolution: "Visual Kernel Painter",
-            edges: "Edge Detection Workspace"
+            edges: "Edge Detection Workspace",
+            kernelLab: "Visual Kernel Laboratory",
+            restoration: "Image Restoration Workspace"
         };
 
         $("pageTitle").textContent = titles[tool];
 
         resetPreviewsOnly();
 
+        const laboratoryActive = tool === "kernelLab";
+        $("standardPreview").classList.toggle("hidden", laboratoryActive);
+        $("kernelLabVisuals").classList.toggle("hidden", !laboratoryActive);
+        $("previewHeading").textContent = laboratoryActive
+            ? "Kernel X-Ray"
+            : tool === "restoration"
+                ? "Restoration Comparison"
+                : "Visual Comparison";
+
+        if (laboratoryActive) {
+            $("previewStatus").textContent =
+                "Analyzing the current painted kernel";
+            analyzeCurrentKernel();
+            if (state.labFile) loadLabImage(state.labFile);
+            return;
+        }
+
         const currentFile =
             tool === "grayscale"
                 ? state.grayFile
                 : tool === "convolution"
                     ? state.convFile
-                    : state.edgeFile;
+                    : tool === "edges"
+                        ? state.edgeFile
+                        : state.restoreFile;
 
         if (currentFile) {
             processSelectedFile(tool, currentFile, false);
@@ -1908,6 +2395,20 @@
     $("edgeInput").addEventListener("change", event => {
         processSelectedFile(
             "edges",
+            event.target.files[0]
+        );
+    });
+
+    $("labInput").addEventListener("change", event => {
+        processSelectedFile(
+            "kernelLab",
+            event.target.files[0]
+        );
+    });
+
+    $("restoreInput").addEventListener("change", event => {
+        processSelectedFile(
+            "restoration",
             event.target.files[0]
         );
     });
@@ -1953,7 +2454,9 @@
     function toolFromInput(inputId) {
         if (inputId === "grayInput") return "grayscale";
         if (inputId === "convInput") return "convolution";
-        return "edges";
+        if (inputId === "edgeInput") return "edges";
+        if (inputId === "labInput") return "kernelLab";
+        return "restoration";
     }
 
     function processSelectedFile(tool, file, updateName = true) {
@@ -1968,8 +2471,12 @@
             state.grayFile = file;
         } else if (tool === "convolution") {
             state.convFile = file;
-        } else {
+        } else if (tool === "edges") {
             state.edgeFile = file;
+        } else if (tool === "kernelLab") {
+            state.labFile = file;
+        } else {
+            state.restoreFile = file;
         }
 
         if (updateName) {
@@ -1978,19 +2485,31 @@
                     ? "grayFileName"
                     : tool === "convolution"
                         ? "convFileName"
-                        : "edgeFileName";
+                        : tool === "edges"
+                            ? "edgeFileName"
+                            : tool === "kernelLab"
+                                ? "labFileName"
+                                : "restoreFileName";
 
             $(fileNameId).textContent = file.name;
         }
 
-        showOriginal(file);
+        if (tool !== "kernelLab") {
+            showOriginal(file);
+        }
 
         if (tool === "grayscale") {
             applyGrayscale();
         } else if (tool === "convolution") {
             applyFilter();
-        } else {
+        } else if (tool === "edges") {
             applyEdges();
+        } else if (tool === "kernelLab") {
+            loadLabImage(file);
+        } else {
+            validateRestorationKernel();
+            $("previewStatus").textContent =
+                "Adjust the blur model, then press Restore Image";
         }
     }
 
@@ -2688,6 +3207,268 @@
     }
 
     /*
+     * Visual Kernel Laboratory
+     */
+
+    async function analyzeCurrentKernel() {
+        if (!state.kernelMatrix.length) return;
+
+        updateKernelInformation();
+
+        const kernel = cloneKernel();
+        drawAnalysisKernel(kernel);
+        validateRestorationKernel();
+
+        $("previewStatus").textContent =
+            "Analyzing spatial and frequency behaviour…";
+
+        const form = new FormData();
+        form.append("kernel", JSON.stringify(kernel));
+
+        try {
+            const data = await requestJson(
+                "/api/kernel-analysis",
+                form
+            );
+
+            $("labFilterClass").textContent = data.filter_type;
+            $("labDcGain").textContent =
+                Number(data.dc_gain).toFixed(4);
+            $("labSymmetry").textContent =
+                data.symmetric ? "Symmetric" : "Asymmetric";
+            $("labSeparable").textContent = data.separable
+                ? "Yes · two 1D passes"
+                : "No · full 2D pass";
+
+            drawFrequencyResponse(data.frequency_response);
+
+            $("previewStatus").textContent =
+                `${data.size} × ${data.size} kernel analysis ready`;
+        } catch (error) {
+            handleError(error);
+        }
+    }
+
+    function drawAnalysisKernel(kernel) {
+        const canvas = $("labKernelCanvas");
+        const context = canvas.getContext("2d");
+        const size = kernel.length;
+        const cell = canvas.width / size;
+        const maximum = Math.max(1e-8, ...kernel.flat().map(Math.abs));
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        for (let row = 0; row < size; row++) {
+            for (let column = 0; column < size; column++) {
+                const value = kernel[row][column];
+                const intensity = Math.min(1, Math.abs(value) / maximum);
+                context.fillStyle = value > 0
+                    ? `rgba(139,124,255,${0.18 + intensity * 0.82})`
+                    : value < 0
+                        ? `rgba(34,211,238,${0.18 + intensity * 0.82})`
+                        : "#111827";
+                context.fillRect(column * cell, row * cell, cell, cell);
+                context.strokeStyle = "#334155";
+                context.strokeRect(column * cell, row * cell, cell, cell);
+
+                if (cell >= 24) {
+                    context.fillStyle = "#f8fafc";
+                    context.font = `${Math.min(13, cell / 4)}px DM Sans`;
+                    context.textAlign = "center";
+                    context.textBaseline = "middle";
+                    context.fillText(
+                        formatKernelValue(value),
+                        column * cell + cell / 2,
+                        row * cell + cell / 2
+                    );
+                }
+            }
+        }
+    }
+
+    function drawFrequencyResponse(source) {
+        const canvas = $("frequencyCanvas");
+        const context = canvas.getContext("2d");
+        const image = new Image();
+
+        image.onload = () => {
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(image, 0, 0);
+        };
+
+        image.src = source;
+    }
+
+    function loadLabImage(file) {
+        const reader = new FileReader();
+        reader.onload = event => {
+            const image = new Image();
+            image.onload = () => {
+                const canvas = $("labImageCanvas");
+                const context = canvas.getContext("2d", { willReadFrequently: true });
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+                context.drawImage(image, 0, 0);
+                state.labImageData = context.getImageData(
+                    0, 0, canvas.width, canvas.height
+                );
+                $("pixelEquation").textContent =
+                    "Image ready. Click any pixel to inspect its convolution calculation.";
+                $("previewStatus").textContent =
+                    "Click a pixel inside the laboratory image";
+                $("resetBtn").disabled = false;
+            };
+            image.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function reflectIndex(index, length) {
+        if (length <= 1) return 0;
+        while (index < 0 || index >= length) {
+            if (index < 0) index = -index;
+            if (index >= length) index = 2 * length - index - 2;
+        }
+        return index;
+    }
+
+    function inspectLabPixel(event) {
+        if (!state.labImageData) {
+            showToast("Upload an image in the laboratory first.", true);
+            return;
+        }
+
+        const canvas = $("labImageCanvas");
+        const rectangle = canvas.getBoundingClientRect();
+        const x = Math.min(
+            canvas.width - 1,
+            Math.max(0, Math.floor((event.clientX - rectangle.left) * canvas.width / rectangle.width))
+        );
+        const y = Math.min(
+            canvas.height - 1,
+            Math.max(0, Math.floor((event.clientY - rectangle.top) * canvas.height / rectangle.height))
+        );
+
+        const kernel = state.kernelMatrix;
+        const radius = Math.floor(kernel.length / 2);
+        let total = 0;
+        const terms = [];
+
+        for (let row = 0; row < kernel.length; row++) {
+            for (let column = 0; column < kernel.length; column++) {
+                const sourceX = reflectIndex(x + column - radius, canvas.width);
+                const sourceY = reflectIndex(y + row - radius, canvas.height);
+                const offset = (sourceY * canvas.width + sourceX) * 4;
+                const red = state.labImageData.data[offset];
+                const green = state.labImageData.data[offset + 1];
+                const blue = state.labImageData.data[offset + 2];
+                const luminance = 0.299 * red + 0.587 * green + 0.114 * blue;
+                const flippedWeight =
+                    kernel[kernel.length - 1 - row][kernel.length - 1 - column];
+                total += luminance * flippedWeight;
+
+                if (kernel.length <= 5) {
+                    terms.push(`${luminance.toFixed(1)}×${formatKernelValue(flippedWeight)}`);
+                }
+            }
+        }
+
+        const clipped = Math.max(0, Math.min(255, Math.round(total)));
+        $("pixelEquation").textContent =
+            `Selected pixel: (${x}, ${y})\n` +
+            (terms.length
+                ? `Products: ${terms.join(" + ")}\n`
+                : `${kernel.length * kernel.length} neighbourhood products were accumulated.\n`) +
+            `Signed sum: ${total.toFixed(2)}\n` +
+            `Final uint8 output: clip(${total.toFixed(2)}, 0, 255) = ${clipped}`;
+
+        const context = canvas.getContext("2d");
+        context.putImageData(state.labImageData, 0, 0);
+        context.strokeStyle = "#29d3ba";
+        context.lineWidth = Math.max(2, canvas.width / 300);
+        context.strokeRect(x - radius, y - radius, kernel.length, kernel.length);
+    }
+
+    /*
+     * Image restoration
+     */
+
+    function updateRestorationControls() {
+        const type = $("restoreKernelType").value;
+        $("restoreSizeControl").classList.toggle("hidden-control", type === "custom");
+        $("restoreSigmaControl").classList.toggle("hidden-control", type !== "gaussian");
+        $("restoreMotionControl").classList.toggle("hidden-control", type !== "motion");
+        validateRestorationKernel();
+    }
+
+    function validateRestorationKernel() {
+        const target = $("restoreValidation");
+        if (!target) return true;
+        const custom = $("restoreKernelType").value === "custom";
+        if (!custom) {
+            target.innerHTML =
+                '<div class="validation-item pass">Preset blur kernel will be normalized automatically.</div>';
+            return true;
+        }
+
+        const values = state.kernelMatrix.flat();
+        const sum = values.reduce((total, value) => total + value, 0);
+        const nonNegative = values.every(value => value >= -1e-8);
+        const normalized = Math.abs(sum - 1) < 0.02;
+        target.innerHTML =
+            `<div class="validation-item ${nonNegative ? "pass" : "fail"}">` +
+            `${nonNegative ? "✓" : "✕"} Blur weights should be non-negative</div>` +
+            `<div class="validation-item ${normalized ? "pass" : "fail"}">` +
+            `${normalized ? "✓" : "✕"} Kernel sum = ${sum.toFixed(4)} (target 1)</div>`;
+        return nonNegative && normalized;
+    }
+
+    async function restoreImage() {
+        if (!state.restoreFile) {
+            showToast("Upload a blurred image first.", true);
+            return;
+        }
+
+        const type = $("restoreKernelType").value;
+        if (type === "custom" && !validateRestorationKernel()) {
+            showToast(
+                "The painted kernel is not a valid normalized blur model.",
+                true
+            );
+            return;
+        }
+
+        const size = Number.parseInt($("restoreKernelSize").value, 10);
+        if (type !== "custom" && (
+            !Number.isInteger(size) || size < 3 || size > 31 || size % 2 === 0
+        )) {
+            showToast("Use an odd restoration kernel size from 3 to 31.", true);
+            return;
+        }
+
+        setLoading(true, "Restoring image with Wiener deconvolution…");
+        const form = new FormData();
+        form.append("image", state.restoreFile);
+        form.append("kernel_type", type);
+        form.append("kernel_size", String(size));
+        form.append("sigma", $("restoreSigma").value);
+        form.append("angle", $("restoreAngle").value);
+        form.append("balance", $("restoreBalance").value);
+        form.append("kernel", JSON.stringify(getKernelValues()));
+
+        try {
+            const data = await requestJson("/api/deconvolve", form);
+            if (!data.restored_image) {
+                throw new Error("The server returned no restored image.");
+            }
+            showOutput(data.restored_image, `Wiener · ${type} blur model`);
+        } catch (error) {
+            handleError(error);
+        }
+    }
+
+    /*
      * Requests and preview
      */
 
@@ -2832,6 +3613,23 @@
             $("edgeFileName").textContent = "";
         }
 
+        if (state.activeTool === "kernelLab") {
+            state.labFile = null;
+            state.labImageData = null;
+            $("labInput").value = "";
+            $("labFileName").textContent = "";
+            const canvas = $("labImageCanvas");
+            canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+            $("pixelEquation").textContent =
+                "Upload an image, then click a pixel to inspect the multiplication and sum.";
+        }
+
+        if (state.activeTool === "restoration") {
+            state.restoreFile = null;
+            $("restoreInput").value = "";
+            $("restoreFileName").textContent = "";
+        }
+
         resetPreviewsOnly();
     }
 
@@ -2919,6 +3717,40 @@
         applyEdges
     );
 
+    $("refreshAnalysisBtn").addEventListener(
+        "click",
+        analyzeCurrentKernel
+    );
+
+    $("labImageCanvas").addEventListener(
+        "click",
+        inspectLabPixel
+    );
+
+    $("restoreKernelType").addEventListener(
+        "change",
+        updateRestorationControls
+    );
+
+    $("restoreSigma").addEventListener("input", event => {
+        $("restoreSigmaValue").textContent =
+            Number(event.target.value).toFixed(1);
+    });
+
+    $("restoreAngle").addEventListener("input", event => {
+        $("restoreAngleValue").textContent = `${event.target.value}°`;
+    });
+
+    $("restoreBalance").addEventListener("input", event => {
+        $("restoreBalanceValue").textContent =
+            Number(event.target.value).toFixed(4);
+    });
+
+    $("restoreBtn").addEventListener(
+        "click",
+        restoreImage
+    );
+
     $("setGridBtn").addEventListener(
         "click",
         applyCustomKernelSize
@@ -2986,6 +3818,7 @@
 
     setupKernelPainter();
     renderKernelPainter(3);
+    updateRestorationControls();
     openTool("home");
 </script>
 </body>

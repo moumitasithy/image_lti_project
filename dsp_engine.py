@@ -553,3 +553,339 @@ def detect_edges(img_array, operator='sobel'):
         }
 
     return maps
+
+
+# ============================================================
+# Feature 4: Visual Kernel Laboratory
+# ============================================================
+
+
+def _classify_kernel(kernel, tolerance=0.02):
+    """Classify a kernel from its coefficient pattern and DC gain."""
+    values = kernel.ravel()
+    kernel_sum = float(values.sum())
+    center = kernel.shape[0] // 2
+
+    nonzero_count = int(
+        np.count_nonzero(np.abs(values) > 1e-8)
+    )
+
+    has_positive = bool(np.any(values > 1e-8))
+    has_negative = bool(np.any(values < -1e-8))
+
+    if nonzero_count == 0:
+        return 'Zero filter'
+
+    if (
+        nonzero_count == 1 and
+        abs(float(kernel[center, center]) - 1.0) < 1e-8
+    ):
+        return 'Identity'
+
+    if (
+        has_positive and
+        not has_negative and
+        abs(kernel_sum - 1.0) < tolerance
+    ):
+        return 'Blur / low-pass'
+
+    if (
+        has_positive and
+        has_negative and
+        abs(kernel_sum) < tolerance
+    ):
+        return 'Edge / high-pass'
+
+    if (
+        has_positive and
+        has_negative and
+        abs(kernel_sum - 1.0) < tolerance
+    ):
+        return 'Sharpening'
+
+    return 'Custom spatial filter'
+
+
+def _kernel_frequency_response(kernel, spectrum_size=256):
+    """Create a centered logarithmic magnitude response for display."""
+    spectrum_size = int(spectrum_size)
+
+    if spectrum_size < kernel.shape[0]:
+        spectrum_size = kernel.shape[0]
+
+    # Put the kernel center at spatial coordinate (0, 0) before FFT.
+    padded_kernel = np.zeros(
+        (spectrum_size, spectrum_size),
+        dtype=np.float32
+    )
+
+    kernel_height, kernel_width = kernel.shape
+    padded_kernel[:kernel_height, :kernel_width] = kernel
+
+    padded_kernel = np.roll(
+        padded_kernel,
+        shift=(
+            -(kernel_height // 2),
+            -(kernel_width // 2)
+        ),
+        axis=(0, 1)
+    )
+
+    frequency_response = np.fft.fft2(
+        padded_kernel
+    )
+
+    frequency_response = np.fft.fftshift(
+        frequency_response
+    )
+
+    magnitude = np.log1p(
+        np.abs(frequency_response)
+    )
+
+    maximum = float(magnitude.max())
+
+    if maximum <= 1e-12:
+        return np.zeros_like(
+            magnitude,
+            dtype=np.uint8
+        )
+
+    return np.clip(
+        magnitude * (255.0 / maximum),
+        0,
+        255
+    ).astype(np.uint8)
+
+
+def _separable_components(kernel, tolerance=1e-5):
+    """Use SVD to determine whether a 2D kernel has rank one."""
+    left, singular_values, right = np.linalg.svd(
+        kernel.astype(np.float64),
+        full_matrices=False
+    )
+
+    if singular_values[0] <= 1e-12:
+        zero_vector = [0.0] * kernel.shape[0]
+        return True, zero_vector, zero_vector.copy()
+
+    residual = float(
+        np.linalg.norm(singular_values[1:]) /
+        singular_values[0]
+    )
+
+    if residual > tolerance:
+        return False, None, None
+
+    scale = np.sqrt(singular_values[0])
+
+    vertical = (
+        left[:, 0] * scale
+    ).astype(np.float64)
+
+    horizontal = (
+        right[0, :] * scale
+    ).astype(np.float64)
+
+    return (
+        True,
+        np.round(vertical, 6).tolist(),
+        np.round(horizontal, 6).tolist()
+    )
+
+
+def analyze_kernel(kernel, spectrum_size=256):
+    """
+    Analyze a painted kernel for the Visual Kernel Laboratory.
+
+    Returns its spatial classification, DC gain, 180-degree
+    symmetry, separability and display-ready frequency response.
+    """
+    kernel = validate_convolution_kernel(kernel)
+
+    kernel_sum = float(kernel.sum())
+
+    symmetric = bool(
+        np.allclose(
+            kernel,
+            np.flip(kernel, axis=(0, 1)),
+            atol=1e-6,
+            rtol=0.0
+        )
+    )
+
+    (
+        separable,
+        vertical_vector,
+        horizontal_vector
+    ) = _separable_components(kernel)
+
+    return {
+        'kernel_sum': round(kernel_sum, 6),
+        'dc_gain': round(kernel_sum, 6),
+        'filter_type': _classify_kernel(kernel),
+        'symmetric': symmetric,
+        'separable': separable,
+        'vertical_vector': vertical_vector,
+        'horizontal_vector': horizontal_vector,
+        'frequency_response': _kernel_frequency_response(
+            kernel,
+            spectrum_size
+        )
+    }
+
+
+# ============================================================
+# Feature 5: Reverse Blur / Image Restoration
+# ============================================================
+
+
+def _psf_to_otf(kernel, output_shape):
+    """Convert a centered spatial blur kernel (PSF) into an OTF."""
+    kernel_height, kernel_width = kernel.shape
+    output_height, output_width = output_shape
+
+    if (
+        kernel_height > output_height or
+        kernel_width > output_width
+    ):
+        raise ValueError(
+            'The blur kernel cannot be larger than the image'
+        )
+
+    padded_kernel = np.zeros(
+        output_shape,
+        dtype=np.float32
+    )
+
+    padded_kernel[:kernel_height, :kernel_width] = kernel
+
+    padded_kernel = np.roll(
+        padded_kernel,
+        shift=(
+            -(kernel_height // 2),
+            -(kernel_width // 2)
+        ),
+        axis=(0, 1)
+    )
+
+    return np.fft.fft2(padded_kernel)
+
+
+def wiener_deconvolution(img_array, blur_kernel, balance=0.01):
+    """
+    Approximately reverse a known blur using Wiener deconvolution.
+
+    balance controls the trade-off between inverse restoration and
+    noise amplification. A larger value produces a more stable but
+    less aggressive restoration.
+    """
+    image = np.asarray(img_array)
+    kernel = validate_convolution_kernel(blur_kernel)
+
+    try:
+        balance = float(balance)
+    except (TypeError, ValueError):
+        raise ValueError('Wiener balance must be numeric')
+
+    if not np.isfinite(balance) or balance <= 0:
+        raise ValueError(
+            'Wiener balance must be a positive finite number'
+        )
+
+    if np.any(kernel < -1e-8):
+        raise ValueError(
+            'A restoration blur kernel cannot contain negative values'
+        )
+
+    kernel_sum = float(kernel.sum())
+
+    if kernel_sum <= 1e-8:
+        raise ValueError(
+            'A restoration blur kernel must have a positive sum'
+        )
+
+    kernel = kernel / kernel_sum
+
+    if image.ndim == 2:
+        working_image = image[..., np.newaxis]
+        return_grayscale = True
+
+    elif image.ndim == 3:
+        if image.shape[2] == 4:
+            image = image[..., :3]
+
+        if image.shape[2] not in (1, 3):
+            raise ValueError(
+                'Restoration supports grayscale, RGB or RGBA images'
+            )
+
+        working_image = image
+        return_grayscale = image.shape[2] == 1
+
+    else:
+        raise ValueError(
+            'Image must be a 2D or 3D array'
+        )
+
+    working_image = (
+        working_image.astype(np.float32) / 255.0
+    )
+
+    pad_height = kernel.shape[0] // 2
+    pad_width = kernel.shape[1] // 2
+
+    padded_image = np.pad(
+        working_image,
+        (
+            (pad_height, pad_height),
+            (pad_width, pad_width),
+            (0, 0)
+        ),
+        mode='reflect'
+    )
+
+    image_shape = padded_image.shape[:2]
+    optical_transfer = _psf_to_otf(
+        kernel,
+        image_shape
+    )
+
+    wiener_filter = (
+        np.conj(optical_transfer) /
+        (np.abs(optical_transfer) ** 2 + balance)
+    )
+
+    restored = np.empty_like(
+        padded_image,
+        dtype=np.float32
+    )
+
+    for channel_index in range(padded_image.shape[2]):
+        blurred_spectrum = np.fft.fft2(
+            padded_image[..., channel_index]
+        )
+
+        restored[..., channel_index] = np.real(
+            np.fft.ifft2(
+                blurred_spectrum * wiener_filter
+            )
+        )
+
+    restored = restored[
+        pad_height:
+        pad_height + working_image.shape[0],
+        pad_width:
+        pad_width + working_image.shape[1]
+    ]
+
+    restored = np.clip(
+        restored * 255.0,
+        0,
+        255
+    ).astype(np.uint8)
+
+    if return_grayscale:
+        return restored[..., 0]
+
+    return restored
