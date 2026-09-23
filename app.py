@@ -510,6 +510,42 @@ def handle_deconvolution():
         }), 500
 
 
+@app.route('/api/noise-cleaner', methods=['POST'])
+def handle_noise_cleaner():
+    try:
+        if 'image' not in request.files:
+            raise ValueError('Upload an image first')
+        image = convert_opencv_to_rgb(decode_uploaded_image(request.files['image']))
+        if image.dtype != np.uint8:
+            raise ValueError('Please upload an 8-bit image')
+        operation = request.form.get('operation', 'clean')
+        if operation not in ('add', 'clean'):
+            raise ValueError('Operation must be add or clean')
+        try:
+            seed = int(request.form.get('seed', '0')) if operation == 'add' else 0
+        except ValueError:
+            raise ValueError('Seed must be an integer')
+        output, metrics = dsp_engine.clean_noise(
+            image,
+            operation=operation,
+            noise_type=request.form.get('noise_type', 'salt_pepper'),
+            amount=parse_float_field('amount', 0.1, 0, 1) if operation == 'add' else 0.1,
+            sigma=parse_float_field('sigma', 20, 0, 100) if operation == 'add' else 20,
+            filter_type=request.form.get('filter_type', 'median'),
+            window_size=parse_odd_size('window_size', 3) if operation == 'clean' else 3,
+            seed=seed,
+            border=request.form.get('border', 'reflect')
+        )
+        return jsonify(original_image=dsp_engine.array_to_base64(image),
+                       output_image=dsp_engine.array_to_base64(output),
+                       operation=operation, metrics=metrics)
+    except ValueError as error:
+        return jsonify(error=str(error)), 400
+    except Exception:
+        app.logger.exception('Noise cleaning failed')
+        return jsonify(error='Unable to clean this image'), 500
+
+
 if __name__ == '__main__':
     app.run(
         debug=True,

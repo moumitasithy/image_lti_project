@@ -1356,6 +1356,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/noise.css') }}">
 </head>
 
 <body>
@@ -1483,6 +1484,10 @@
                     <small>Reverse blur</small>
                 </span>
             </button>
+            <button class="tool-btn" data-tool="noise" data-tab="noiseTab" type="button">
+                <span class="tool-icon" aria-hidden="true">✦</span>
+                <span class="tool-copy"><strong>Noise Cleaner</strong><small>Simulate &amp; restore</small></span>
+            </button>
         </nav>
 
         <div class="sidebar-note">
@@ -1581,6 +1586,10 @@
                     </p>
                 </article>
 
+                <article class="feature-card" data-open-tool="noise">
+                    <strong>Noise Cleaner</strong>
+                    <p>Add Gaussian or salt-and-pepper noise, or clean a noisy image with median and mean filters.</p>
+                </article>
                 <article class="feature-card" data-open-tool="restoration">
                     <strong>Image Restoration</strong>
                     <p>
@@ -1957,6 +1966,8 @@
                     </div>
                 </div>
 
+                {% include 'noise_controls.html' %}
+
                 <!-- Image Restoration -->
 
                 <div id="restorationTab" class="tab-content">
@@ -2119,6 +2130,7 @@
                     </div>
                 </header>
 
+                {% include 'noise_preview.html' %}
                 <div id="standardPreview" class="preview-grid">
                     <div class="image-card">
                         <div class="image-card-head">
@@ -2295,7 +2307,9 @@
     });
 
     function openTool(tool) {
+        if (typeof cancelNoiseRequest === 'function') cancelNoiseRequest();
         state.activeTool = tool;
+        $("noisePreview").classList.toggle("hidden", tool !== "noise");
 
         document.querySelectorAll(".tool-btn").forEach(button => {
             button.classList.toggle(
@@ -2334,7 +2348,8 @@
             convolution: "Visual Kernel Painter",
             edges: "Edge Detection Workspace",
             kernelLab: "Visual Kernel Laboratory",
-            restoration: "Image Restoration Workspace"
+            restoration: "Image Restoration Workspace",
+            noise: "Noise Cleaner"
         };
 
         $("pageTitle").textContent = titles[tool];
@@ -2342,7 +2357,7 @@
         resetPreviewsOnly();
 
         const laboratoryActive = tool === "kernelLab";
-        $("standardPreview").classList.toggle("hidden", laboratoryActive);
+        $("standardPreview").classList.toggle("hidden", laboratoryActive || tool === "noise");
         $("kernelLabVisuals").classList.toggle("hidden", !laboratoryActive);
         $("previewHeading").textContent = laboratoryActive
             ? "Kernel X-Ray"
@@ -2350,6 +2365,11 @@
                 ? "Restoration Comparison"
                 : "Visual Comparison";
 
+        if (tool === "noise") {
+            $("previewHeading").textContent = "Uploaded Image → Result";
+            refreshNoisePreview();
+            return;
+        }
         if (laboratoryActive) {
             $("previewStatus").textContent =
                 "Analyzing the current painted kernel";
@@ -2452,6 +2472,7 @@
     }
 
     function toolFromInput(inputId) {
+        if (inputId === "noiseInput") return "noise";
         if (inputId === "grayInput") return "grayscale";
         if (inputId === "convInput") return "convolution";
         if (inputId === "edgeInput") return "edges";
@@ -2460,6 +2481,7 @@
     }
 
     function processSelectedFile(tool, file, updateName = true) {
+        if (tool === "noise") { selectNoiseFile(file); return; }
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
@@ -3595,6 +3617,7 @@
     }
 
     function resetWorkspace() {
+        if (state.activeTool === "noise") resetNoise();
         if (state.activeTool === "grayscale") {
             state.grayFile = null;
             $("grayInput").value = "";
@@ -3821,5 +3844,6 @@
     updateRestorationControls();
     openTool("home");
 </script>
+<script src="{{ url_for('static', filename='js/noise.js') }}"></script>
 </body>
 </html>

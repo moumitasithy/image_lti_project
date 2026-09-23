@@ -4,6 +4,74 @@ import cv2
 import numpy as np
 
 
+def noise_quality(reference, candidate):
+    """Full-reference metrics on 8-bit samples; None represents infinite PSNR."""
+    difference = reference.astype(np.float64) - candidate.astype(np.float64)
+    mse = float(np.mean(difference ** 2))
+    return {'mse': mse, 'psnr': None if mse == 0 else float(10 * np.log10(255 ** 2 / mse))}
+
+
+def clean_noise(image, noise_type='salt_pepper', amount=0.1, sigma=20.0,
+                filter_type='median', window_size=3, seed=0, border='reflect', operation='clean'):
+    """Add noise OR clean the uploaded image, without coupling the operations.
+
+    The original is retained for metrics. A local RNG makes comparisons
+    repeatable. Median is nonlinear; mean is a normalized LTI box filter.
+    """
+    if operation not in ('add', 'clean'):
+        raise ValueError('Operation must be add or clean')
+    if operation == 'add' and noise_type not in ('salt_pepper', 'gaussian'):
+        raise ValueError('Unsupported noise type')
+    if operation == 'clean' and filter_type not in ('median', 'mean'):
+        raise ValueError('Unsupported cleaning filter')
+    borders = {'reflect': cv2.BORDER_REFLECT_101, 'replicate': cv2.BORDER_REPLICATE}
+    if operation == 'clean' and border not in borders:
+        raise ValueError('Unsupported border handling')
+    if not isinstance(window_size, int) or window_size < 3 or window_size > 31 or window_size % 2 == 0:
+        raise ValueError('Window size must be odd and between 3 and 31')
+    if not np.isfinite(amount) or not 0 <= amount <= 1:
+        raise ValueError('Noise amount must be between 0 and 1')
+    if not np.isfinite(sigma) or not 0 <= sigma <= 100:
+        raise ValueError('Gaussian sigma must be between 0 and 100')
+    if not isinstance(seed, int) or not 0 <= seed <= 4294967295:
+        raise ValueError('Seed must be an integer between 0 and 4294967295')
+    image = np.asarray(image)
+    if image.dtype != np.uint8 or image.ndim not in (2, 3) or image.size == 0:
+        raise ValueError('Expected a nonempty 8-bit image')
+    if image.ndim == 3 and image.shape[2] not in (3, 4):
+        raise ValueError('Expected grayscale, RGB or RGBA')
+    # Preserve transparency; alpha is not a color sample or part of the metrics.
+    original = image[..., :3] if image.ndim == 3 else image
+    rng = np.random.default_rng(seed)
+    if operation == 'clean':
+        noisy = original.copy()
+    elif noise_type == 'salt_pepper':
+        noisy = original.copy()
+        mask = rng.random(original.shape[:2])
+        noisy[mask < amount / 2] = 0
+        noisy[(mask >= amount / 2) & (mask < amount)] = 255
+    else:
+        noisy = np.rint(np.clip(original.astype(np.float32) +
+                               rng.normal(0, sigma, original.shape), 0, 255)).astype(np.uint8)
+    if operation == 'add':
+        metrics = noise_quality(original, noisy)
+        if image.ndim == 3 and image.shape[2] == 4:
+            noisy = np.dstack((noisy, image[..., 3]))
+        return noisy, metrics
+    radius = window_size // 2
+    padded = cv2.copyMakeBorder(noisy, radius, radius, radius, radius, borders[border])
+    if filter_type == 'median':
+        filtered = cv2.medianBlur(padded, window_size)
+    else:
+        filtered = cv2.blur(padded, (window_size, window_size))
+    cleaned = filtered[radius:radius + original.shape[0], radius:radius + original.shape[1]]
+    if image.ndim == 3 and image.shape[2] == 4:
+        cleaned = np.dstack((cleaned, image[..., 3]))
+    # The clean ground truth is unknown for a noisy upload, so quality metrics
+    # cannot be inferred by comparing the result with the noisy input.
+    return cleaned, None
+
+
 def convert_to_grayscale(img_array):
     """
     Convert an RGB or RGBA image into a 2D grayscale image.

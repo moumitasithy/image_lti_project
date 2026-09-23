@@ -1,0 +1,11 @@
+.noise-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 18px; }
+.noise-stage { min-height: 240px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.noise-stage img { width: 100%; max-height: 460px; object-fit: contain; }
+.noise-stage img[hidden] { display: none; }
+.noise-quality { padding: 0 18px 18px; }
+.noise-quality table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.noise-quality caption { text-align: left; padding: 12px 0; font-weight: 600; }
+.noise-quality th, .noise-quality td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--line); }
+.noise-quality .hint { margin-top: 14px; line-height: 1.6; }
+#noiseTab .label { display: block; margin-bottom: 10px; }
+@media (max-width: 1100px) { .noise-comparison { grid-template-columns: 1fr; } .noise-stage { min-height: 180px; } }

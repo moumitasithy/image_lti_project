@@ -1,0 +1,50 @@
+<div id="noiseTab" class="tab-content">
+    <div class="panel-head">
+        <span class="tool-number">Tool 06</span>
+        <h2>Noise Cleaner</h2>
+        <p>Choose whether to add noise or clean an already noisy image.</p>
+    </div>
+    <div class="controls">
+        <div class="section">
+            <label class="label" for="noiseOperation">Operation</label>
+            <select id="noiseOperation" class="select"><option value="clean">Clean Noise</option><option value="add">Add Noise</option></select>
+        </div>
+        <div class="drop-zone" data-input="noiseInput" tabindex="0" role="button">
+            <strong id="noiseUploadLabel">Upload a noisy image</strong><span>PNG, JPG or WebP · color or grayscale</span>
+            <span class="selected-file" id="noiseFileName"></span>
+        </div>
+        <input class="hidden-input" type="file" id="noiseInput" accept="image/*">
+        <div class="section" data-noise-mode="add">
+            <label class="label" for="noiseType">Noise model</label>
+            <select id="noiseType" class="select"><option value="salt_pepper">Salt-and-pepper</option><option value="gaussian">Gaussian</option></select>
+        </div>
+        <div class="section" id="noiseAmountControl">
+            <label class="label" for="noiseAmount">Corrupted fraction</label>
+            <div class="range-row"><input id="noiseAmount" type="range" min="0" max="100" step="0.5" value="10"><output id="noiseAmountValue" class="range-value">10%</output></div>
+        </div>
+        <div class="section hidden" id="noiseSigmaControl">
+            <label class="label" for="noiseSigma">Gaussian strength (standard deviation)</label>
+            <div class="range-row"><input id="noiseSigma" type="range" min="0" max="100" step="1" value="20"><output id="noiseSigmaValue" class="range-value">20</output></div>
+            <p class="hint">Measured on the 0–255 pixel scale.</p>
+        </div>
+        <div class="section" data-noise-mode="clean">
+            <label class="label" for="noiseFilter">Cleaning filter</label>
+            <select id="noiseFilter" class="select"><option value="median">Median</option><option value="mean">Mean (average)</option></select>
+        </div>
+        <div class="section" data-noise-mode="clean">
+            <label class="label" for="noiseWindow">Window size</label>
+            <div class="range-row"><input id="noiseWindow" type="range" min="3" max="31" step="2" value="3"><output id="noiseWindowValue" class="range-value">3 × 3</output></div>
+        </div>
+        <div class="section" data-noise-mode="add">
+            <label class="label" for="noiseSeed">Random seed</label>
+            <input id="noiseSeed" class="input" type="number" min="0" max="4294967295" step="1" value="0">
+            <p class="hint">Use the same seed to reproduce the same noise.</p>
+        </div>
+        <div class="section" data-noise-mode="clean">
+            <label class="label" for="noiseBorder">Border handling</label>
+            <select id="noiseBorder" class="select"><option value="reflect">Reflect</option><option value="replicate">Replicate edge pixels</option></select>
+        </div>
+        <button id="noiseRun" class="primary-btn section" type="button">Clean Noise</button>
+        <div class="info-box" data-noise-mode="clean">Median filtering removes isolated specks and is nonlinear. Mean filtering averages nearby pixels and may soften edges. Larger windows can erase fine detail.</div>
+    </div>
+</div>

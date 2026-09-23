@@ -1,0 +1,18 @@
+<div id="noisePreview" class="hidden">
+    <div class="noise-comparison">
+        {% for key, title in [('Original', 'Uploaded image'), ('Output', 'Result')] %}
+        <section class="image-card">
+            <div class="image-card-head"><span class="image-label" id="noise{{ key }}Label">{{ title }}</span></div>
+            <div class="noise-stage"><img id="noise{{ key }}" alt="{{ title }} image" hidden><p id="noise{{ key }}Empty" class="hint">{% if key == 'Original' %}Upload an image{% else %}Choose an operation and run it{% endif %}</p></div>
+        </section>
+        {% endfor %}
+    </div>
+    <div class="noise-quality">
+        <table id="noiseMetricsTable" class="hidden"><caption>Added noise compared with the uploaded image</caption>
+            <thead><tr><th scope="col">Image</th><th scope="col">MSE ↓</th><th scope="col">PSNR ↑</th></tr></thead>
+            <tbody><tr><th scope="row">Noisy</th><td id="noiseMse">—</td><td id="noisePsnr">—</td></tr>
+            </tbody>
+        </table>
+        <p id="noiseSummary" class="hint" aria-live="polite">Cleaning quality cannot be measured with MSE/PSNR without a clean reference image.</p>
+    </div>
+</div>
