@@ -1808,6 +1808,11 @@
                             </select>
                         </div>
 
+                        <div id="sharpenStrengthControls" class="section hidden">
+                            <div class="section-title"><label class="label" for="sharpenStrength">Sharpening Strength (α)</label></div>
+                            <div class="range-row"><input id="sharpenStrength" type="range" min="0" max="3" step="0.05" value="1"><output id="sharpenStrengthValue" class="range-value">1.00</output></div>
+                            <p class="hint" style="margin-top:8px">0 = original · 1 = standard · higher = stronger edges. Strength is normalized across kernel sizes; high values may create halos.</p>
+                        </div>
                         <div id="blurSigmaControls" class="section hidden">
                             <div class="section-title"><label class="label" for="blurSigma">Gaussian strength (σ)</label></div>
                             <div class="range-row"><input id="blurSigma" type="range" min="0.1" max="5" step="0.1" value="1"><output id="blurSigmaValue" class="range-value">1.0</output></div>
@@ -3230,26 +3235,30 @@
         );
     }
 
-    function generateLaplacianSharpenKernel(size) {
+    function generateLaplacianSharpenKernel(size, strength = 1) {
+        // Normalize the neighbor sum so strength does not explode at large sizes.
+        // At 3x3 and strength=1 this is the original [-1,...,9,...,-1] kernel.
+        const gain = 8 * strength;
         const matrix = Array.from(
             { length: size },
-            () => Array(size).fill(-1)
+            () => Array(size).fill(-gain / (size * size - 1))
         );
 
         const center = Math.floor(size / 2);
 
         /*
-         * N² center makes the total sum equal to 1.
+         * Center 1+gain balances the negative neighbors: total sum is 1.
          * Therefore, the original image is preserved while
          * high-frequency information is enhanced.
          */
-        matrix[center][center] =
-            size * size;
+        matrix[center][center] = 1 + gain;
 
         return matrix;
     }
 
     function updateBlurSigmaControls() {
+        $("sharpenStrengthControls").classList.toggle("hidden", $("presetSelect").value !== "laplacian");
+        $("sharpenStrengthValue").textContent = Number($("sharpenStrength").value).toFixed(2);
         $("blurSigmaControls").classList.toggle("hidden", $("presetSelect").value !== "gaussian");
         const sigma = Number($("blurSigma").value);
         $("blurSigmaValue").textContent = sigma.toFixed(1);
@@ -3298,7 +3307,8 @@
         } else {
             state.kernelMatrix =
                 generateLaplacianSharpenKernel(
-                    state.currentSize
+                    state.currentSize,
+                    Number($("sharpenStrength").value)
                 );
         }
 
@@ -3988,6 +3998,10 @@
     /*
      * Control listeners
      */
+
+    $("sharpenStrength").addEventListener("input", () => {
+        if ($("presetSelect").value === "laplacian") loadPreset(false);
+    });
 
     $("blurSigma").addEventListener("input", () => {
         if ($("presetSelect").value === "gaussian") loadPreset(false);
