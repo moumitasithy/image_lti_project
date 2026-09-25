@@ -1,0 +1,10 @@
+.theatre { margin: 18px; padding: 20px; border: 1px solid rgba(170,240,208,.25); border-radius: 22px; background: linear-gradient(140deg,rgba(73,145,124,.12),rgba(17,22,38,.7)); }
+.theatre-heading { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.theatre h2 { font-size:20px; margin-top:6px; }.theatre h3 { font-size:13px; margin-bottom:12px; }
+.theatre-buttons { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:16px 0; }
+.theatre-buttons .primary-btn { width:auto; padding:10px 22px; }.theatre-buttons label { font-size:12px; display:flex; align-items:center; gap:8px; }.theatre-buttons .select { width:auto; padding:8px; }
+.theatre-views { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }.theatre figure { min-width:0; }.theatre figcaption { font-size:12px; margin-bottom:8px; color:#cbd5e1; }
+.theatre canvas { display:block; width:100%; aspect-ratio:1; border-radius:12px; background:#111827; image-rendering:pixelated; }
+.theatre progress { width:100%; height:8px; margin-top:16px; accent-color:#aaf0d0; }
+.theatre-note { margin-top:14px; }.theatre button:disabled { opacity:.45; cursor:not-allowed; }
+@media(max-width:620px) { .theatre { margin:12px; padding:12px; }.theatre-views { grid-template-columns:1fr; } }

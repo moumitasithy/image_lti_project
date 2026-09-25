@@ -1,7 +1,7 @@
 <div id="noiseTab" class="tab-content">
     <div class="panel-head">
         <span class="tool-number">Tool 06</span>
-        <h2>Noise Cleaner</h2>
+        <h2>Noise Studio</h2>
         <p>Choose whether to add noise or clean an already noisy image.</p>
     </div>
     <div class="controls">
@@ -29,7 +29,7 @@
         </div>
         <div class="section" data-noise-mode="clean">
             <label class="label" for="noiseFilter">Cleaning filter</label>
-            <select id="noiseFilter" class="select"><option value="median">Median</option><option value="mean">Mean (average)</option></select>
+            <select id="noiseFilter" class="select"><option value="median">Median (nonlinear)</option><option value="mean">Mean (LTI convolution)</option></select>
         </div>
         <div class="section" data-noise-mode="clean">
             <label class="label" for="noiseWindow">Window size</label>
@@ -45,6 +45,7 @@
             <select id="noiseBorder" class="select"><option value="reflect">Reflect</option><option value="replicate">Replicate edge pixels</option></select>
         </div>
         <button id="noiseRun" class="primary-btn section" type="button">Clean Noise</button>
-        <div class="info-box" data-noise-mode="clean">Median filtering removes isolated specks and is nonlinear. Mean filtering averages nearby pixels and may soften edges. Larger windows can erase fine detail.</div>
+        <div class="info-box" data-noise-mode="clean">Mean: a normalized N × N box kernel performs 2D low-pass convolution. Median: sort the N × N neighborhood and select its middle value; this is nonlinear. Larger windows can erase fine detail.</div>
+        <div class="info-box" data-noise-mode="add">Gaussian: g = f + n, where n is a random Gaussian signal. Salt-and-pepper: randomly replace pixels with black or white impulses. These noise models are not LTI filters.</div>
     </div>
 </div>

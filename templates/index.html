@@ -712,7 +712,7 @@
             margin: auto;
             border-radius: 8px;
             background: #111827;
-            cursor: crosshair;
+            cursor: url("{{ url_for('static', filename='brush-cursor.svg') }}") 5 27, crosshair;
             touch-action: none;
             user-select: none;
         }
@@ -739,7 +739,7 @@
         }
 
         .positive-color {
-            background: var(--primary);
+            background: rgba(170, 232, 207, .5);
         }
 
         .zero-color {
@@ -748,7 +748,7 @@
         }
 
         .negative-color {
-            background: var(--cyan);
+            background: #d69a59;
         }
 
         .kernel-stats {
@@ -1357,6 +1357,112 @@
         }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/noise.css') }}">
+
+    <style>
+        /* Soft glass surfaces and wide, vertically stacked image previews. */
+        :root {
+            --bg: #0b0b19;
+            --surface: rgba(24, 25, 48, .78);
+            --line: rgba(189, 184, 255, .16);
+            --muted: #a4abc4;
+            --primary: #aa9bff;
+            --radius-lg: 28px;
+            --shadow: 0 18px 48px rgba(3, 3, 15, .3), inset 0 1px 0 rgba(255,255,255,.09);
+        }
+        body {
+            background: radial-gradient(ellipse at 25% 0, #282044 0, transparent 48%),
+                        radial-gradient(ellipse at 100% 35%, #123238 0, transparent 50%), #0b0b19;
+            background-attachment: fixed;
+        }
+        .sidebar {
+            background: linear-gradient(150deg, rgba(39,32,66,.88), rgba(12,15,29,.93));
+            border-right: 1px solid var(--line);
+            backdrop-filter: blur(20px);
+        }
+        .workspace { grid-template-columns: minmax(270px, 310px) minmax(0, 1fr); gap: 20px; }
+        .panel, .feature-card, .home-hero {
+            background: linear-gradient(140deg, rgba(255,255,255,.055), transparent 45%), var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+        .panel-head, .controls { padding-left: 20px; padding-right: 20px; }
+        .panel-head h2 { font-size: 21px; }
+        .panel-head p, .hint, .info-box { line-height: 1.6; }
+        .preview-grid, .noise-comparison { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+        .image-card, .lab-card, .edge-card {
+            border-radius: 22px;
+            border: 1px solid rgba(186,185,241,.19);
+            background: rgba(12,16,32,.6);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.12);
+        }
+        .image-card-head { height: 44px; background: linear-gradient(110deg, rgba(160,143,255,.1), rgba(117,231,218,.035)); }
+        .image-stage, .noise-stage {
+            aspect-ratio: 16 / 9;
+            min-height: 0;
+            height: auto;
+            padding: 16px;
+            position: relative;
+        }
+        .image-stage img, .noise-stage img {
+            width: 100%; height: 100%; max-height: none;
+            min-height: 0; object-fit: contain;
+        }
+        .noise-stage { background: rgba(8,12,24,.42); }
+        .input, .select {
+            border-radius: 14px;
+            background: rgba(9,13,29,.66);
+            border: 1px solid rgba(190,184,255,.22);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,.2), 0 1px 0 rgba(255,255,255,.04);
+        }
+        select option { background: #191b30; color: #f2f5f9; }
+        .primary-btn {
+            border-radius: 16px;
+            background: linear-gradient(170deg, #b6a5ff 0%, #8c76ed 48%, #7159d4 100%);
+            border: 1px solid rgba(227,215,255,.35);
+            color: #100b28;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,.28), 0 6px 20px rgba(126,97,227,.22);
+        }
+        .primary-btn:hover { background: linear-gradient(170deg, #c3b5ff, #947cf5); }
+        .primary-btn:active, .icon-btn:active { transform: translateY(1px); }
+        .icon-btn, .secondary-btn, .tool-btn.active {
+            border-radius: 14px;
+            background: linear-gradient(155deg, rgba(178,159,255,.18), rgba(116,110,188,.09));
+            border-color: rgba(193,174,255,.25);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.09);
+        }
+        .tool-btn.active { box-shadow: inset 3px 0 #ad9aff, inset 0 1px rgba(255,255,255,.1); }
+        .drop-zone { border-radius: 20px; background: linear-gradient(145deg, rgba(165,143,255,.07), rgba(89,196,195,.04)); }
+        .info-box { border-radius: 16px; background: rgba(145,125,220,.07); }
+        .range-value { color: #c4b7ff; }
+        :focus-visible { outline-color: #baaaff !important; }
+        @media (min-width: 851px) and (max-width: 1100px) {
+            .workspace { grid-template-columns: 260px minmax(0, 1fr); gap: 14px; }
+            .app-shell { grid-template-columns: 224px minmax(0, 1fr); }
+            .main { padding-left: 20px; padding-right: 20px; }
+        }
+        @media (max-width: 850px) {
+            .workspace { grid-template-columns: minmax(0, 1fr); }
+            .sidebar { backdrop-filter: none; }
+        }
+        @media (max-width: 620px) {
+            .noise-comparison { padding: 12px; }
+            .image-stage, .noise-stage { padding: 10px; }
+            .panel-head, .controls { padding-left: 18px; padding-right: 18px; }
+        }
+    </style>
+<style>
+.kernel-heatbar { height: 10px; margin: 12px 10px 5px; border-radius: 8px; background: linear-gradient(90deg, #d69a59, #795333, #131b28, #24706c, #aaf0d0); }
+.kernel-scale { white-space: pre; text-align: center; font-size: 11px; font-weight: 700; color: #ccd6e3; padding-bottom: 8px; }
+#brushSign { font-size: 11px; font-weight: 700; }
+</style><style>
+.edge-kernel-heading { font-size: 12px; margin: 15px 0 8px; color: #cbd5e1; }
+.edge-kernel-scroll { width: 100%; min-width: 0; overflow: hidden; container-type: inline-size; border: 1px solid var(--line); border-radius: 12px; }
+.edge-kernel-table { display: grid; grid-template-columns: repeat(var(--matrix-size), minmax(0, 1fr)); width: 100%; font-variant-numeric: tabular-nums; }
+.edge-kernel-table tbody, .edge-kernel-table tr { display: contents; }
+.edge-kernel-table td { display: flex; align-items: center; justify-content: center; min-width: 0; aspect-ratio: 1; padding: 0; overflow: hidden; box-shadow: inset 0 0 0 .5px #334155; font-size: min(16px, calc(120cqw / var(--matrix-size) / var(--value-length))); font-weight: 800; cursor: default; }
+</style><link rel="stylesheet" href="{{ url_for('static', filename='css/theatre.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fourier.css') }}">
 </head>
 
 <body>
@@ -1480,14 +1586,15 @@
                     </svg>
                 </span>
                 <span class="tool-copy">
-                    <strong>Image Restoration</strong>
+                    <strong>Image Restoration (Deblur)</strong>
                     <small>Reverse blur</small>
                 </span>
             </button>
             <button class="tool-btn" data-tool="noise" data-tab="noiseTab" type="button">
                 <span class="tool-icon" aria-hidden="true">✦</span>
-                <span class="tool-copy"><strong>Noise Cleaner</strong><small>Simulate &amp; restore</small></span>
+                <span class="tool-copy"><strong>Noise Studio</strong><small>Simulate &amp; restore</small></span>
             </button>
+            <button class="tool-btn" data-tool="fourier" data-tab="fourierTab" type="button"><span class="tool-icon" aria-hidden="true">∿</span><span class="tool-copy"><strong>Fourier Canvas</strong><small>Build images from waves</small></span></button>
         </nav>
 
         <div class="sidebar-note">
@@ -1586,12 +1693,13 @@
                     </p>
                 </article>
 
+                <article class="feature-card" data-open-tool="fourier"><strong>Fourier Canvas</strong><p>Rebuild grayscale or color images one Fourier wave at a time.</p></article>
                 <article class="feature-card" data-open-tool="noise">
-                    <strong>Noise Cleaner</strong>
+                    <strong>Noise Studio</strong>
                     <p>Add Gaussian or salt-and-pepper noise, or clean a noisy image with median and mean filters.</p>
                 </article>
                 <article class="feature-card" data-open-tool="restoration">
-                    <strong>Image Restoration</strong>
+                    <strong>Image Restoration (Deblur)</strong>
                     <p>
                         Recover detail from Gaussian or motion blur using
                         regularized Wiener deconvolution.
@@ -1700,6 +1808,13 @@
                             </select>
                         </div>
 
+                        <div id="blurSigmaControls" class="section hidden">
+                            <div class="section-title"><label class="label" for="blurSigma">Gaussian strength (σ)</label></div>
+                            <div class="range-row"><input id="blurSigma" type="range" min="0.1" max="5" step="0.1" value="1"><output id="blurSigmaValue" class="range-value">1.0</output></div>
+                            <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input id="blurAutoSize" type="checkbox" checked>Auto-fit kernel size to σ</label>
+                            <p id="blurSigmaHint" class="hint" style="margin-top:8px">Higher σ spreads the blur over more pixels.</p>
+                        </div>
+
                         <div class="section">
                             <div class="section-title">
                                 <label class="label" for="customSizeInput">
@@ -1736,6 +1851,7 @@
                             <div class="painter-toolbar">
                                 <label class="painter-field">
                                     <span>Brush value</span>
+                                    <small id="brushSign">Positive · add</small>
                                     <input id="brushValue"
                                            class="input"
                                            type="number"
@@ -1801,6 +1917,7 @@
                                 </canvas>
                             </div>
 
+                            <div class="kernel-heatbar" aria-hidden="true"></div><div id="painterScale" class="kernel-scale"></div>
                             <div class="kernel-legend">
                                 <span>
                                     <i class="positive-color"></i>
@@ -1831,7 +1948,7 @@
                             </div>
 
                             <div class="info-box">
-                                Purple cells contain positive weights, cyan
+                                Mint cells contain positive weights, orangish-brown
                                 cells contain negative weights, and dark cells
                                 contain zero. Processing occurs after a brush
                                 stroke or when Apply Kernel is pressed.
@@ -1890,7 +2007,22 @@
                             </select>
                         </div>
 
+                        <div class="section">
+                            <div class="section-title"><label class="label" for="edgeKernelSize">Kernel size</label><span class="hint">Odd sizes, 3–31</span></div>
+                            <input id="edgeKernelSize" class="input" type="number" min="3" max="31" step="2" value="3">
+                        </div>
+                        <div class="section">
+                            <div class="section-title"><span class="label">Operator matrices</span><span class="hint">Read only</span></div>
+                            <p id="edgeKernelStatus" class="hint" aria-live="polite">Loading coefficients…</p>
+                            <div id="edgeKernelMatrices"></div>
+                            <div class="kernel-heatbar" aria-hidden="true"></div>
+                            <div id="edgeKernelScale" class="kernel-scale"></div>
+                            <p class="hint">Brown: negative · dark: zero · mint: positive. Matrices fit automatically; hover a cell for its precise value.</p>
+                        </div>
+
                         <div class="info-box">
+                            Larger kernels measure changes over a wider neighborhood.
+                            Sobel and Laplacian use binomial smoothing; Prewitt uses uniform smoothing and a ramp derivative.
                             Each edge map is normalized independently for clear
                             structural comparison.
                         </div>
@@ -1966,6 +2098,7 @@
                     </div>
                 </div>
 
+                {% include 'fourier_controls.html' %}
                 {% include 'noise_controls.html' %}
 
                 <!-- Image Restoration -->
@@ -1973,7 +2106,7 @@
                 <div id="restorationTab" class="tab-content">
                     <div class="panel-head">
                         <span class="tool-number">Tool 05</span>
-                        <h2>Image Restoration</h2>
+                        <h2>Image Restoration (Deblur)</h2>
                         <p>
                             Approximately reverse Gaussian or motion blur with
                             regularized Wiener deconvolution.
@@ -2071,9 +2204,9 @@
                         <div class="section">
                             <div class="section-title">
                                 <label class="label" for="restoreBalance">
-                                    Noise control K
+                                    Deblur Stabilization (K)
                                 </label>
-                                <span class="hint">Higher = less noise amplification</span>
+                                <span class="hint">Higher = gentler deblur, fewer artifacts</span>
                             </div>
                             <div class="range-row">
                                 <input id="restoreBalance"
@@ -2130,7 +2263,9 @@
                     </div>
                 </header>
 
+                {% include 'fourier_preview.html' %}
                 {% include 'noise_preview.html' %}
+                {% include 'convolution_theatre.html' %}
                 <div id="standardPreview" class="preview-grid">
                     <div class="image-card">
                         <div class="image-card-head">
@@ -2201,6 +2336,7 @@
                                     width="420"
                                     height="420"></canvas>
                         </div>
+                        <div class="kernel-heatbar" aria-hidden="true"></div><div id="labScale" class="kernel-scale"></div>
                     </section>
 
                     <section class="lab-card">
@@ -2308,7 +2444,10 @@
 
     function openTool(tool) {
         if (typeof cancelNoiseRequest === 'function') cancelNoiseRequest();
+        if (typeof pauseFourier === "function") pauseFourier();
         state.activeTool = tool;
+        $("fourierPreview").classList.toggle("hidden", tool !== "fourier");
+        if (typeof syncTheatre === "function") syncTheatre();
         $("noisePreview").classList.toggle("hidden", tool !== "noise");
 
         document.querySelectorAll(".tool-btn").forEach(button => {
@@ -2348,8 +2487,9 @@
             convolution: "Visual Kernel Painter",
             edges: "Edge Detection Workspace",
             kernelLab: "Visual Kernel Laboratory",
-            restoration: "Image Restoration Workspace",
-            noise: "Noise Cleaner"
+            restoration: "Image Restoration (Deblur) Workspace",
+            noise: "Noise Studio",
+            fourier: "Fourier Canvas"
         };
 
         $("pageTitle").textContent = titles[tool];
@@ -2357,7 +2497,7 @@
         resetPreviewsOnly();
 
         const laboratoryActive = tool === "kernelLab";
-        $("standardPreview").classList.toggle("hidden", laboratoryActive || tool === "noise");
+        $("standardPreview").classList.toggle("hidden", laboratoryActive || tool === "noise" || tool === "fourier");
         $("kernelLabVisuals").classList.toggle("hidden", !laboratoryActive);
         $("previewHeading").textContent = laboratoryActive
             ? "Kernel X-Ray"
@@ -2365,6 +2505,11 @@
                 ? "Restoration Comparison"
                 : "Visual Comparison";
 
+        if (tool === "fourier") {
+            $("previewHeading").textContent = "Build images, one wave at a time";
+            renderFourier();
+            return;
+        }
         if (tool === "noise") {
             $("previewHeading").textContent = "Uploaded Image → Result";
             refreshNoisePreview();
@@ -2472,6 +2617,7 @@
     }
 
     function toolFromInput(inputId) {
+        if (inputId === "fourierInput") return "fourier";
         if (inputId === "noiseInput") return "noise";
         if (inputId === "grayInput") return "grayscale";
         if (inputId === "convInput") return "convolution";
@@ -2481,6 +2627,7 @@
     }
 
     function processSelectedFile(tool, file, updateName = true) {
+        if (tool === "fourier") { selectFourierFile(file); return; }
         if (tool === "noise") { selectNoiseFile(file); return; }
         if (!file) return;
 
@@ -2493,6 +2640,7 @@
             state.grayFile = file;
         } else if (tool === "convolution") {
             state.convFile = file;
+            if (typeof syncTheatre === "function") syncTheatre();
         } else if (tool === "edges") {
             state.edgeFile = file;
         } else if (tool === "kernelLab") {
@@ -2626,7 +2774,34 @@
         updateKernelInformation();
     }
 
+    function kernelHeatColor(value, maximum) {
+        const t = Math.max(-1, Math.min(1, value / Math.max(maximum, 1e-8)));
+        const stops = [[214, 154, 89], [121, 83, 51], [19, 27, 40], [36, 112, 108], [170, 240, 208]];
+        const position = (t + 1) * 2;
+        const index = Math.min(3, Math.floor(position));
+        const fraction = position - index;
+        return `rgb(${stops[index].map((v, channel) => Math.round(v + (stops[index + 1][channel] - v) * fraction)).join(",")})`;
+    }
+
+    function updateKernelScale(id, maximum) {
+        $(id).textContent = `−${formatKernelValue(maximum)}                  0                  +${formatKernelValue(maximum)}`;
+    }
+
+    function updateBrushAppearance() {
+        const negative = state.brushValue < 0;
+        const erasing = state.brushMode === "erase";
+        const color = erasing || state.brushValue === 0 ? "#c5ccda" : negative ? "#d69a59" : "#aaf0d0";
+        $("brushValue").style.color = color;
+        $("brushValue").style.borderColor = color;
+        $("brushSign").textContent = erasing ? "Eraser · zero" : state.brushValue === 0 ? "Zero · no change" : negative ? "Negative · subtract" : "Positive · add";
+        $("brushSign").style.color = color;
+        const cursor = erasing || state.brushValue === 0 ? "brush-neutral.svg" : negative ? "brush-negative.svg" : "brush-cursor.svg";
+        $("kernelCanvas").style.cursor = `url(/static/${cursor}) 5 27, crosshair`;
+    }
+
     function drawKernelCanvas() {
+        updateBlurSigmaControls();
+        if (typeof syncTheatre === "function") syncTheatre();
         const canvas = $("kernelCanvas");
         const context = canvas.getContext("2d");
 
@@ -2641,7 +2816,7 @@
         );
 
         const maximumMagnitude = Math.max(
-            1,
+            1e-8,
             ...state.kernelMatrix
                 .flat()
                 .map(value => Math.abs(value))
@@ -2652,21 +2827,7 @@
                 const value =
                     state.kernelMatrix[row][column];
 
-                const strength =
-                    Math.abs(value) / maximumMagnitude;
-
-                const alpha =
-                    0.18 + strength * 0.82;
-
-                if (value > 0) {
-                    context.fillStyle =
-                        `rgba(139, 124, 255, ${alpha})`;
-                } else if (value < 0) {
-                    context.fillStyle =
-                        `rgba(34, 211, 238, ${alpha})`;
-                } else {
-                    context.fillStyle = "#111827";
-                }
+                context.fillStyle = kernelHeatColor(value, maximumMagnitude);
 
                 const x = column * cellSize;
                 const y = row * cellSize;
@@ -2689,9 +2850,9 @@
                 );
 
                 if (cellSize >= 34) {
-                    context.fillStyle = "#f8fafc";
+                    context.fillStyle = Math.abs(value) / maximumMagnitude > 0.8 ? "#101923" : "#f8fafc";
                     context.font =
-                        `${Math.min(14, cellSize / 4)}px DM Sans`;
+                        `800 ${Math.min(32, cellSize * 0.36)}px "DM Sans", sans-serif`;
 
                     context.textAlign = "center";
                     context.textBaseline = "middle";
@@ -2699,11 +2860,13 @@
                     context.fillText(
                         formatKernelValue(value),
                         x + cellSize / 2,
-                        y + cellSize / 2
+                        y + cellSize / 2,
+                        cellSize - 8
                     );
                 }
             }
         }
+        updateKernelScale("painterScale", maximumMagnitude);
     }
 
     function formatKernelValue(value) {
@@ -2722,6 +2885,7 @@
 
             saveKernelForUndo();
             state.isPainting = true;
+            state.paintedCells = new Set();
 
             canvas.setPointerCapture(event.pointerId);
             paintKernelAtPointer(event);
@@ -2802,8 +2966,16 @@
                     column < state.currentSize;
 
                 if (validRow && validColumn) {
+                    // Apply once per cell per stroke, avoiding pointer jitter
+                    // and overlapping brush areas repeatedly adding the value.
+                    const cellKey = `${row},${column}`;
+                    if (state.paintedCells.has(cellKey)) continue;
+                    state.paintedCells.add(cellKey);
                     state.kernelMatrix[row][column] =
-                        value;
+                        state.brushMode === "erase"
+                            ? 0
+                            : Math.max(-100, Math.min(100,
+                                state.kernelMatrix[row][column] + value));
                 }
             }
         }
@@ -2816,6 +2988,7 @@
 
     function setPainterMode(mode) {
         state.brushMode = mode;
+        updateBrushAppearance();
 
         $("paintModeBtn").classList.toggle(
             "active",
@@ -3000,11 +3173,15 @@
 
         state.kernelUndoStack = [];
 
+        if ($("presetSelect").value === "gaussian") $("blurAutoSize").checked = false;
         renderKernelPainter(size);
 
-        $("presetSelect").value = "custom";
-
-        scheduleConvolution();
+        // Rebuild the selected preset at the new size instead of relabeling it.
+        if ($("presetSelect").value !== "custom") {
+            loadPreset(false);
+        } else {
+            scheduleConvolution();
+        }
     }
 
     function getKernelValues() {
@@ -3072,13 +3249,27 @@
         return matrix;
     }
 
-    function loadPreset() {
+    function updateBlurSigmaControls() {
+        $("blurSigmaControls").classList.toggle("hidden", $("presetSelect").value !== "gaussian");
+        const sigma = Number($("blurSigma").value);
+        $("blurSigmaValue").textContent = sigma.toFixed(1);
+        const recommended = Math.min(31, 2 * Math.ceil(3 * sigma) + 1);
+        $("blurSigmaHint").textContent = state.currentSize < recommended
+            ? `This ${state.currentSize} × ${state.currentSize} kernel limits the blur spread. Enable auto-fit or use at least ${recommended} × ${recommended}.`
+            : "Higher σ creates a wider, stronger blur. Auto-fit covers approximately ±3σ.";
+    }
+
+    function loadPreset(recordUndo = true) {
+        updateBlurSigmaControls();
         const preset =
             $("presetSelect").value;
 
-        if (preset === "custom") return;
+        if (preset === "custom") {
+            if (typeof syncTheatre === "function") syncTheatre();
+            return;
+        }
 
-        saveKernelForUndo();
+        if (recordUndo) saveKernelForUndo();
 
         if (preset === "identity") {
             state.kernelMatrix =
@@ -3086,10 +3277,18 @@
                     state.currentSize
                 );
         } else if (preset === "gaussian") {
+            if ($("blurAutoSize").checked) {
+                const size = Math.min(31, 2 * Math.ceil(3 * Number($("blurSigma").value)) + 1);
+                if (size !== state.currentSize) {
+                    state.kernelUndoStack = [];
+                    $("customSizeInput").value = size;
+                    renderKernelPainter(size);
+                }
+            }
             state.kernelMatrix =
                 generateGaussianKernel(
                     state.currentSize,
-                    state.currentSize / 3
+                    Number($("blurSigma").value)
                 );
         } else if (preset === "average") {
             state.kernelMatrix =
@@ -3166,8 +3365,66 @@
      * Edge detection
      */
 
+    async function refreshEdgeKernels() {
+        const revision = (state.edgeKernelRevision || 0) + 1;
+        state.edgeKernelRevision = revision;
+        $("edgeKernelMatrices").replaceChildren();
+        $("edgeKernelScale").textContent = "";
+        if (!$("edgeKernelSize").value || !$("edgeKernelSize").checkValidity()) {
+            $("edgeKernelStatus").textContent = "Choose an odd size from 3 to 31.";
+            return;
+        }
+        $("edgeKernelStatus").textContent = "Loading coefficients…";
+        const form = new FormData();
+        form.append("operator", $("edgeOperator").value);
+        form.append("kernel_size", $("edgeKernelSize").value);
+        try {
+            const data = await requestJson("/api/edge-kernels", form);
+            if (revision !== state.edgeKernelRevision) return;
+            const maximum = Math.max(1e-8, ...Object.values(data.kernels).flat(2).map(Math.abs));
+            const labels = data.operator === "laplacian"
+                ? {horizontal: "Horizontal component (d²/dx²)", vertical: "Vertical component (d²/dy²)", combined: "Combined Laplacian"}
+                : {horizontal: "Horizontal edges (Gy)", vertical: "Vertical edges (Gx)"};
+            for (const [name, matrix] of Object.entries(data.kernels)) {
+                const heading = document.createElement("h3");
+                heading.className = "edge-kernel-heading";
+                heading.textContent = labels[name];
+                const scroll = document.createElement("div");
+                scroll.className = "edge-kernel-scroll";
+                scroll.setAttribute("role", "region");
+                scroll.setAttribute("aria-label", labels[name] + " coefficient matrix");
+                const table = document.createElement("table");
+                table.className = "edge-kernel-table";
+                table.style.setProperty("--matrix-size", matrix.length);
+                table.setAttribute("aria-label", labels[name]);
+                for (const row of matrix) {
+                    const tr = table.insertRow();
+                    for (const value of row) {
+                        const td = tr.insertCell();
+                        td.textContent = value === 0 ? "0" : Number.isInteger(value) ? String(value) : Number(value.toPrecision(3)).toString();
+                        td.style.setProperty("--value-length", Math.max(2, td.textContent.length));
+                        td.title = String(value);
+                        td.style.background = kernelHeatColor(value, maximum);
+                        td.style.color = Math.abs(value) / maximum > 0.8 ? "#101923" : "#f8fafc";
+                    }
+                }
+                scroll.append(table);
+                $("edgeKernelMatrices").append(heading, scroll);
+            }
+            updateKernelScale("edgeKernelScale", maximum);
+            $("edgeKernelStatus").textContent = `${data.operator} · ${data.kernel_size} × ${data.kernel_size} · coefficients used for convolution`;
+        } catch (error) {
+            if (revision === state.edgeKernelRevision) $("edgeKernelStatus").textContent = error.message;
+        }
+    }
+
     async function applyEdges() {
+        refreshEdgeKernels();
         if (!state.edgeFile) return;
+        if (!$("edgeKernelSize").reportValidity() || !$("edgeKernelSize").value) return;
+        const edgeRequest = (state.edgeRequest || 0) + 1;
+        state.edgeRequest = edgeRequest;
+        const edgeFile = state.edgeFile;
 
         setLoading(
             true,
@@ -3185,12 +3442,14 @@
             "operator",
             $("edgeOperator").value
         );
+        form.append("kernel_size", $("edgeKernelSize").value);
 
         try {
             const data = await requestJson(
                 "/api/edges",
                 form
             );
+            if (edgeRequest !== state.edgeRequest || state.activeTool !== "edges" || edgeFile !== state.edgeFile) return;
 
             [
                 "horizontal",
@@ -3221,7 +3480,7 @@
 
             showOutput(
                 data.results.combined.image,
-                `${data.operator} · combined`
+                `${data.operator} · ${data.kernel_size} × ${data.kernel_size} · combined`
             );
         } catch (error) {
             handleError(error);
@@ -3283,28 +3542,26 @@
             for (let column = 0; column < size; column++) {
                 const value = kernel[row][column];
                 const intensity = Math.min(1, Math.abs(value) / maximum);
-                context.fillStyle = value > 0
-                    ? `rgba(139,124,255,${0.18 + intensity * 0.82})`
-                    : value < 0
-                        ? `rgba(34,211,238,${0.18 + intensity * 0.82})`
-                        : "#111827";
+                context.fillStyle = kernelHeatColor(value, maximum);
                 context.fillRect(column * cell, row * cell, cell, cell);
                 context.strokeStyle = "#334155";
                 context.strokeRect(column * cell, row * cell, cell, cell);
 
                 if (cell >= 24) {
-                    context.fillStyle = "#f8fafc";
-                    context.font = `${Math.min(13, cell / 4)}px DM Sans`;
+                    context.fillStyle = intensity > 0.8 ? "#101923" : "#f8fafc";
+                    context.font = `800 ${Math.min(26, cell * 0.36)}px "DM Sans", sans-serif`;
                     context.textAlign = "center";
                     context.textBaseline = "middle";
                     context.fillText(
                         formatKernelValue(value),
                         column * cell + cell / 2,
-                        row * cell + cell / 2
+                        row * cell + cell / 2,
+                        cell - 6
                     );
                 }
             }
         }
+        updateKernelScale("labScale", maximum);
     }
 
     function drawFrequencyResponse(source) {
@@ -3617,6 +3874,7 @@
     }
 
     function resetWorkspace() {
+        if (state.activeTool === "fourier") resetFourier();
         if (state.activeTool === "noise") resetNoise();
         if (state.activeTool === "grayscale") {
             state.grayFile = null;
@@ -3626,6 +3884,7 @@
 
         if (state.activeTool === "convolution") {
             state.convFile = null;
+            if (typeof syncTheatre === "function") syncTheatre();
             $("convInput").value = "";
             $("convFileName").textContent = "";
         }
@@ -3730,10 +3989,19 @@
      * Control listeners
      */
 
+    $("blurSigma").addEventListener("input", () => {
+        if ($("presetSelect").value === "gaussian") loadPreset(false);
+    });
+    $("blurAutoSize").addEventListener("change", () => {
+        if ($("presetSelect").value === "gaussian") loadPreset(false);
+    });
+
     $("presetSelect").addEventListener(
         "change",
         loadPreset
     );
+
+    $("edgeKernelSize").addEventListener("change", applyEdges);
 
     $("edgeOperator").addEventListener(
         "change",
@@ -3784,6 +4052,7 @@
         event => {
             state.brushValue =
                 Number(event.target.value) || 0;
+            updateBrushAppearance();
         }
     );
 
@@ -3839,11 +4108,15 @@
      * Initial state
      */
 
+    updateBrushAppearance();
+    refreshEdgeKernels();
     setupKernelPainter();
     renderKernelPainter(3);
     updateRestorationControls();
     openTool("home");
 </script>
 <script src="{{ url_for('static', filename='js/noise.js') }}"></script>
+<script src="{{ url_for('static', filename='js/theatre.js') }}"></script>
+<script src="{{ url_for('static', filename='js/fourier.js') }}"></script>
 </body>
 </html>

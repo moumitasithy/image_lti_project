@@ -330,6 +330,21 @@ def handle_convolve():
         }), 500
 
 
+@app.route('/api/edge-kernels', methods=['POST'])
+def handle_edge_kernels():
+    """Expose the exact convolution coefficients without requiring an image."""
+    try:
+        operator = request.form.get('operator', 'sobel').lower()
+        size = parse_odd_size('kernel_size', 3)
+        kernels = dsp_engine.create_edge_kernels(operator, size)
+        if operator == 'laplacian':
+            kernels['combined'] = kernels['horizontal'] + kernels['vertical']
+        return jsonify(operator=operator, kernel_size=size,
+                       kernels={name: matrix.tolist() for name, matrix in kernels.items()})
+    except ValueError as error:
+        return jsonify(error=str(error)), 400
+
+
 @app.route('/api/edges', methods=['POST'])
 def handle_edges():
     try:
@@ -361,9 +376,11 @@ def handle_edges():
 
         image = convert_opencv_to_rgb(image)
 
+        kernel_size = parse_odd_size('kernel_size', 3)
         edge_maps = dsp_engine.detect_edges(
             image,
-            operator
+            operator,
+            kernel_size
         )
 
         results = {}
@@ -380,6 +397,7 @@ def handle_edges():
 
         return jsonify({
             'operator': operator,
+            'kernel_size': kernel_size,
             'results': results
         })
 
@@ -544,6 +562,26 @@ def handle_noise_cleaner():
     except Exception:
         app.logger.exception('Noise cleaning failed')
         return jsonify(error='Unable to clean this image'), 500
+
+
+@app.route('/api/fourier-canvas', methods=['POST'])
+def handle_fourier_canvas():
+    try:
+        if 'image' not in request.files:
+            raise ValueError('Upload an image first')
+        try:
+            size = int(request.form.get('sample_size', '32'))
+        except ValueError:
+            raise ValueError('Sample size must be 32 or 64')
+        image = convert_opencv_to_rgb(decode_uploaded_image(request.files['image']))
+        return jsonify(dsp_engine.prepare_fourier_canvas(
+            image, request.form.get('mode', 'grayscale'), size,
+            request.form.get('order', 'low')))
+    except ValueError as error:
+        return jsonify(error=str(error)), 400
+    except Exception:
+        app.logger.exception('Fourier Canvas preparation failed')
+        return jsonify(error='Unable to prepare this image'), 500
 
 
 if __name__ == '__main__':

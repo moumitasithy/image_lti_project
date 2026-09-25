@@ -1,0 +1,14 @@
+<div id="fourierPreview" class="hidden fourier-preview">
+    <div class="fourier-actions"><button id="fourierPlay" type="button" class="primary-btn" disabled>Play</button><button id="fourierStep" type="button" class="icon-btn" disabled>Step wave</button><button id="fourierRestart" type="button" class="icon-btn" disabled>Restart</button><button id="fourierComplete" type="button" class="icon-btn" disabled>Complete</button></div>
+    <div class="fourier-progress"><label for="fourierCount">Wave groups <strong id="fourierCountLabel">Upload an image</strong></label><input id="fourierCount" type="range" min="0" max="0" value="0" disabled><p id="fourierMetrics" class="hint" aria-live="polite">MSE and PSNR compare the displayed reconstruction with the sampled reference.</p></div>
+    <div class="fourier-images">
+        <figure class="image-card"><figcaption class="image-card-head">Sampled original <span id="fourierSampleLabel" class="hint"></span></figcaption><div class="fourier-stage"><canvas id="fourierOriginal" width="256" height="256" aria-label="Sampled reference image"></canvas></div></figure>
+        <figure class="image-card"><figcaption class="image-card-head">Reconstructed from waves</figcaption><div class="fourier-stage"><canvas id="fourierResult" width="256" height="256" aria-label="Image reconstructed from selected Fourier components"></canvas></div></figure>
+    </div>
+    <div class="fourier-inspect">
+        <figure class="image-card"><figcaption class="image-card-head">Latest wave group</figcaption><div class="fourier-stage"><canvas id="fourierWave" width="256" height="256" aria-label="Latest signed wave contribution, centered on neutral gray"></canvas></div><p id="fourierWaveLabel" class="hint">Wave preview is contrast-scaled for visibility. Neutral gray means zero contribution.</p></figure>
+        <figure class="image-card"><figcaption class="image-card-head">Frequency spectrum</figcaption><div class="fourier-stage"><canvas id="fourierSpectrum" width="384" height="384" aria-label="Centered log magnitude spectrum with selected frequencies marked"></canvas></div><p class="hint">Normalized log magnitude: dark → violet → orange → yellow. Mint marks selected frequencies; white outlines the latest group.</p></figure>
+    </div>
+    <p id="fourierDetail" class="fourier-detail">Upload an image to begin Fourier synthesis.</p>
+    <p class="hint">All wave groups reconstruct the sampled reference, not the full-resolution upload. MSE/PSNR use rounded, clipped display pixels. The running sum remains signed floating point. Download saves the current sampled reconstruction.</p>
+</div>

@@ -1,0 +1,13 @@
+<div id="fourierTab" class="tab-content">
+    <div class="panel-head"><span class="tool-number">Tool 07</span><h2>Fourier Canvas</h2><p>Build images, one wave at a time.</p></div>
+    <div class="controls">
+        <div class="drop-zone" data-input="fourierInput" role="button" tabindex="0"><strong>Upload any image</strong><span>Photos, landscapes, logos or patterns</span><span id="fourierFileName" class="selected-file"></span></div>
+        <input id="fourierInput" type="file" accept="image/*" class="hidden-input">
+        <div class="section"><label class="label" for="fourierMode">Image mode</label><select id="fourierMode" class="select"><option value="grayscale">Grayscale</option><option value="color">Color (RGB)</option></select></div>
+        <div class="section"><label class="label" for="fourierOrder">Wave order</label><select id="fourierOrder" class="select"><option value="low">Low frequencies first</option><option value="strong">Strongest components first</option></select></div>
+        <div class="section"><label class="label" for="fourierSize">Teaching resolution</label><select id="fourierSize" class="select"><option value="32">32 px longest side · fast</option><option value="64">64 px longest side · more detail</option></select></div>
+        <div class="section"><label class="label" for="fourierSpeed">Animation speed</label><select id="fourierSpeed" class="select"><option value="2">2 wave groups / second</option><option value="16" selected>16 wave groups / second</option><option value="64">64 wave groups / second</option><option value="256">256 wave groups / second</option></select></div>
+        <div class="info-box section">Start with average brightness (DC), then add sinusoidal waves. Each step adds a conjugate pair, or a single self-conjugate frequency, to keep the result real.</div>
+        <div class="info-box section">Color mode reconstructs red, green and blue independently. The sample preserves your image's proportions; transparent pixels are composited on white.</div>
+    </div>
+</div>

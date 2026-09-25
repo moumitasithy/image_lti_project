@@ -1,0 +1,17 @@
+<section id="convolutionTheatre" class="theatre hidden" aria-labelledby="theatreTitle">
+    <div class="theatre-heading"><div><span class="tool-number">Watch convolution</span><h2 id="theatreTitle">Convolution Live Theatre</h2></div><span class="hint">Preset kernels · read only</span></div>
+    <p id="theatreStatus" class="hint" aria-live="polite">Select a preset to begin.</p>
+    <div class="theatre-buttons">
+        <button id="theatrePlay" class="primary-btn" type="button">Play</button>
+        <button id="theatreStep" class="icon-btn" type="button">Step pixel</button>
+        <button id="theatreRestart" class="icon-btn" type="button">Restart</button>
+        <label for="theatreSpeed">Speed <select id="theatreSpeed" class="select"><option value="1">1 pixel/s</option><option value="4" selected>4 pixels/s</option><option value="12">12 pixels/s</option><option value="24">24 pixels/s</option></select></label>
+    </div>
+    <div class="theatre-views">
+        <figure><figcaption>Input signal + moving window</figcaption><canvas id="theatreInput" width="384" height="384" aria-label="12 by 12 grayscale input and current kernel window"></canvas></figure>
+        <figure><figcaption>Output built pixel by pixel</figcaption><canvas id="theatreOutput" width="384" height="384" aria-label="Convolution output revealed one pixel at a time"></canvas></figure>
+    </div>
+    <progress id="theatreProgress" max="144" value="0" aria-label="Pixels calculated"></progress>
+    <p id="theatrePosition" class="hint">0 / 144 pixels</p>
+    <p class="hint theatre-note">Teaching view: a 12 × 12 grayscale sample of your upload, or a built-in test signal. Reflect padding supplies samples outside the image. The kernel is flipped 180° for convolution; these symmetric presets look the same after flipping. Full-resolution processing above/below is independent.</p>
+</section>

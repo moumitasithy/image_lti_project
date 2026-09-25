@@ -4,11 +4,122 @@ import cv2
 import numpy as np
 
 
+def prepare_fourier_canvas(image, mode='grayscale', sample_size=32, order='low'):
+    """Return normalized Fourier coefficients grouped into real-valued waves.
+
+    Each conjugate pair contributes 2*Re(C*exp(j*phase))/pixel_count.
+    Self-conjugate bins (DC/Nyquist) contribute once. RGB shares the same
+    frequency coordinates but keeps independent complex channel amplitudes.
+    """
+    if mode not in ('grayscale', 'color') or order not in ('low', 'strong'):
+        raise ValueError('Invalid Fourier mode or component order')
+    if sample_size not in (32, 64):
+        raise ValueError('Sample size must be 32 or 64')
+    image = np.asarray(image)
+    if image.dtype != np.uint8 or image.ndim not in (2, 3) or image.size == 0:
+        raise ValueError('Upload a nonempty 8-bit image')
+    if image.ndim == 3:
+        if image.shape[2] not in (3, 4):
+            raise ValueError('Expected RGB or RGBA image')
+        if image.shape[2] == 4:
+            # Composite transparency on white before treating it as a signal.
+            alpha = image[..., 3:4].astype(np.float64) / 255
+            image = np.rint(image[..., :3] * alpha + 255 * (1-alpha)).astype(np.uint8)
+    height, width = image.shape[:2]
+    scale = min(1, sample_size / max(height, width))
+    image = cv2.resize(image, (max(1, round(width*scale)), max(1, round(height*scale))), interpolation=cv2.INTER_AREA)
+    if mode == 'grayscale':
+        image = convert_to_grayscale(image)
+        samples = image[..., None]
+    else:
+        samples = np.repeat(image[..., None], 3, axis=2) if image.ndim == 2 else image
+        image = samples
+    height, width, channels = samples.shape
+    spectrum = np.fft.fft2(samples.astype(np.float64), axes=(0, 1)) / (height * width)
+    visited = {(0, 0)}
+    groups = []
+    for y in range(height):
+        for x in range(width):
+            if (y, x) in visited:
+                continue
+            partner = ((-y) % height, (-x) % width)
+            visited.update(((y, x), partner))
+            multiplier = 1 if partner == (y, x) else 2
+            coefficient = spectrum[y, x]
+            fy = y if y <= height//2 else y-height
+            fx = x if x <= width//2 else x-width
+            groups.append({'x': x, 'y': y, 'partner': list(partner), 'fx': fx, 'fy': fy,
+                           're': coefficient.real.tolist(), 'im': coefficient.imag.tolist(),
+                           'multiplier': multiplier,
+                           'energy': float(multiplier * np.sum(np.abs(coefficient)**2))})
+    if order == 'strong':
+        groups.sort(key=lambda g: (-g['energy'], g['y'], g['x']))
+    else:
+        groups.sort(key=lambda g: ((g['fx']/width)**2 + (g['fy']/height)**2, g['y'], g['x']))
+    magnitude = np.log1p(np.sqrt(np.sum(np.abs(spectrum)**2, axis=2)))
+    maximum = float(magnitude.max())
+    if maximum > 0:
+        magnitude /= maximum
+    return {'width': width, 'height': height, 'channels': channels, 'mode': mode,
+            'order': order, 'dc': spectrum[0, 0].real.tolist(), 'groups': groups,
+            'samples': samples.reshape(-1).tolist(), 'spectrum': magnitude.reshape(-1).tolist(),
+            'original_image': array_to_base64(image)}
+
+
 def noise_quality(reference, candidate):
     """Full-reference metrics on 8-bit samples; None represents infinite PSNR."""
     difference = reference.astype(np.float64) - candidate.astype(np.float64)
     mse = float(np.mean(difference ** 2))
     return {'mse': mse, 'psnr': None if mse == 0 else float(10 * np.log10(255 ** 2 / mse))}
+
+
+def noise_spatial_filter(image, window_size, filter_type, border):
+    """Implement neighborhood filtering using array operations only.
+
+    Mean: h[i,j] = 1 / N**2, y[m,n] = sum h[i,j] x[m-i,n-j].
+    This normalized box kernel is a low-pass LTI convolution on an extended
+    image. Border extension and final rounding/clipping are separate steps.
+    Median: sort N**2 samples and select rank N**2 // 2 (nonlinear).
+    Neither path calls a library image filter or convolution routine.
+    """
+    radius = window_size // 2
+    height, width = image.shape[:2]
+    padding = ((radius, radius), (radius, radius))
+    if image.ndim == 3:
+        padding += ((0, 0),)
+    padded = np.pad(image, padding, mode='reflect' if border == 'reflect' else 'edge')
+
+    if filter_type == 'mean':
+        # Unit DC gain: the kernel coefficients sum to one.
+        kernel = np.ones((window_size, window_size), dtype=np.float64)
+        kernel /= window_size * window_size
+        output = np.zeros(image.shape, dtype=np.float64)
+        # Flip the kernel for true convolution (a box kernel is symmetric).
+        for row in range(window_size):
+            for column in range(window_size):
+                output += (padded[row:row + height, column:column + width] *
+                           kernel[window_size - 1 - row, window_size - 1 - column])
+        return np.rint(np.clip(output, 0, 255)).astype(np.uint8)
+
+    output = np.empty_like(image)
+    sample_count = window_size * window_size
+    # Process bounded tiles rather than allocating H * W * N**2 samples.
+    # Each row in samples holds one pixel/channel's neighborhood.
+    channels = 1 if image.ndim == 2 else image.shape[2]
+    tile_width = max(1, min(width, 2_000_000 // (sample_count * channels)))
+    for row in range(height):
+        for start in range(0, width, tile_width):
+            stop = min(width, start + tile_width)
+            samples = np.empty((stop - start,) + image.shape[2:] + (sample_count,), dtype=image.dtype)
+            index = 0
+            for dy in range(window_size):
+                for dx in range(window_size):
+                    samples[..., index] = padded[row + dy, start + dx:stop + dx]
+                    index += 1
+            # Sorting is a general array primitive, not a built-in median filter.
+            samples.sort(axis=-1)
+            output[row, start:stop] = samples[..., sample_count // 2]
+    return output
 
 
 def clean_noise(image, noise_type='salt_pepper', amount=0.1, sigma=20.0,
@@ -24,7 +135,7 @@ def clean_noise(image, noise_type='salt_pepper', amount=0.1, sigma=20.0,
         raise ValueError('Unsupported noise type')
     if operation == 'clean' and filter_type not in ('median', 'mean'):
         raise ValueError('Unsupported cleaning filter')
-    borders = {'reflect': cv2.BORDER_REFLECT_101, 'replicate': cv2.BORDER_REPLICATE}
+    borders = ('reflect', 'replicate')
     if operation == 'clean' and border not in borders:
         raise ValueError('Unsupported border handling')
     if not isinstance(window_size, int) or window_size < 3 or window_size > 31 or window_size % 2 == 0:
@@ -46,25 +157,26 @@ def clean_noise(image, noise_type='salt_pepper', amount=0.1, sigma=20.0,
     if operation == 'clean':
         noisy = original.copy()
     elif noise_type == 'salt_pepper':
+        # Impulse corruption: g = (1 - mask) * f + mask * impulse.
+        # One random draw per pixel; equal probability of black and white.
         noisy = original.copy()
         mask = rng.random(original.shape[:2])
         noisy[mask < amount / 2] = 0
         noisy[(mask >= amount / 2) & (mask < amount)] = 255
     else:
-        noisy = np.rint(np.clip(original.astype(np.float32) +
-                               rng.normal(0, sigma, original.shape), 0, 255)).astype(np.uint8)
+        # Box-Muller transform: two uniform random signals produce a
+        # standard Gaussian signal z. Additive model: g[m,n] = f[m,n] + sigma*z.
+        # Random number generation is a primitive, not an image-processing filter.
+        u1 = np.maximum(rng.random(original.shape), np.finfo(np.float64).tiny)
+        u2 = rng.random(original.shape)
+        noise_signal = sigma * np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
+        noisy = np.rint(np.clip(original.astype(np.float64) + noise_signal, 0, 255)).astype(np.uint8)
     if operation == 'add':
         metrics = noise_quality(original, noisy)
         if image.ndim == 3 and image.shape[2] == 4:
             noisy = np.dstack((noisy, image[..., 3]))
         return noisy, metrics
-    radius = window_size // 2
-    padded = cv2.copyMakeBorder(noisy, radius, radius, radius, radius, borders[border])
-    if filter_type == 'median':
-        filtered = cv2.medianBlur(padded, window_size)
-    else:
-        filtered = cv2.blur(padded, (window_size, window_size))
-    cleaned = filtered[radius:radius + original.shape[0], radius:radius + original.shape[1]]
+    cleaned = noise_spatial_filter(noisy, window_size, filter_type, border)
     if image.ndim == 3 and image.shape[2] == 4:
         cleaned = np.dstack((cleaned, image[..., 3]))
     # The clean ground truth is unknown for a noisy upload, so quality metrics
@@ -448,12 +560,12 @@ def _convolve_float(img_array, kernel):
     """
     image = np.asarray(
         img_array,
-        dtype=np.float32
+        dtype=np.float64
     )
 
     kernel = np.asarray(
         kernel,
-        dtype=np.float32
+        dtype=np.float64
     )
 
     if image.ndim != 2:
@@ -488,7 +600,7 @@ def _convolve_float(img_array, kernel):
 
     output = np.zeros_like(
         image,
-        dtype=np.float32
+        dtype=np.float64
     )
 
     image_height, image_width = image.shape
@@ -519,7 +631,7 @@ def _normalize_edge(response):
     """
     response = np.asarray(
         response,
-        dtype=np.float32
+        dtype=np.float64
     )
 
     strength = np.abs(response)
@@ -528,7 +640,7 @@ def _normalize_edge(response):
         strength.max()
     )
 
-    if maximum <= 0:
+    if maximum <= 1e-8:
         empty_image = np.zeros_like(
             strength,
             dtype=np.uint8
@@ -550,7 +662,45 @@ def _normalize_edge(response):
     return normalized_image, strength
 
 
-def detect_edges(img_array, operator='sobel'):
+def create_edge_kernels(operator, size=3):
+    """Build odd 3..31 kernels without built-in edge/filter functions.
+
+    Sobel and Laplacian: convolve the original stencil with a separable
+    unit-sum binomial smoothing kernel. Prewitt: uniform smoothing across
+    the edge and a centered ramp derivative. Scale preserves ramp gain.
+    Size 3 retains the original coefficient matrices exactly.
+    """
+    if operator not in EDGE_KERNELS:
+        raise ValueError('Unsupported edge operator')
+    if not isinstance(size, int) or size < 3 or size > 31 or size % 2 == 0:
+        raise ValueError('Edge kernel size must be odd and between 3 and 31')
+    if size == 3:
+        return {name: kernel.copy() for name, kernel in EDGE_KERNELS[operator].items()}
+    if operator == 'prewitt':
+        ramp = np.arange(size, dtype=np.float64) - size // 2
+        derivative = ramp * (2.0 / np.sum(ramp ** 2))
+        smoothing = np.full(size, 3.0 / size)
+        horizontal = np.outer(derivative, smoothing)
+        return {'horizontal': horizontal, 'vertical': horizontal.T.copy()}
+    # Pascal row of length size-2; normalized before forming the 2D kernel.
+    coefficients = np.array([1.0])
+    for _ in range(size - 3):
+        expanded = np.zeros(len(coefficients) + 1)
+        expanded[:-1] += coefficients / 2
+        expanded[1:] += coefficients / 2
+        coefficients = expanded
+    smoothing = np.outer(coefficients, coefficients)
+    kernels = {}
+    for name, base in EDGE_KERNELS[operator].items():
+        kernel = np.zeros((size, size), dtype=np.float64)
+        for row in range(3):
+            for column in range(3):
+                kernel[row:row + size - 2, column:column + size - 2] += base[row, column] * smoothing
+        kernels[name] = kernel
+    return kernels
+
+
+def detect_edges(img_array, operator='sobel', kernel_size=3):
     """
     Generate horizontal, vertical and combined edge maps.
     """
@@ -565,7 +715,7 @@ def detect_edges(img_array, operator='sobel'):
         img_array
     )
 
-    kernels = EDGE_KERNELS[operator]
+    kernels = create_edge_kernels(operator, kernel_size)
 
     horizontal_response = _convolve_float(
         grayscale_image,
@@ -579,7 +729,7 @@ def detect_edges(img_array, operator='sobel'):
 
     # Overall gradient magnitude:
     # sqrt(G_horizontal^2 + G_vertical^2)
-    combined_response = np.hypot(
+    combined_response = (horizontal_response + vertical_response) if operator == 'laplacian' else np.hypot(
         horizontal_response,
         vertical_response
     )
