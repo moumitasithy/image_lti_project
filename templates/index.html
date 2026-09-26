@@ -1540,18 +1540,20 @@
             </button>
 
             <button class="tool-btn"
-                    data-tool="edges"
-                    data-tab="edgeTab"
+                    data-tool="restoration"
+                    data-tab="restorationTab"
                     type="button">
                 <span class="tool-icon">
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8">
-                        <path d="m4 18 5-12 4 12 3-8 4 8"/>
+                        <path d="M4 12a8 8 0 1 0 2.3-5.7"/>
+                        <path d="M4 5v5h5"/>
+                        <path d="M9 12h6m-3-3v6"/>
                     </svg>
                 </span>
                 <span class="tool-copy">
-                    <strong>Edge Maps</strong>
-                    <small>Directional detection</small>
+                    <strong>Image Restoration (Deblur)</strong>
+                    <small>Reverse blur</small>
                 </span>
             </button>
 
@@ -1574,20 +1576,18 @@
             </button>
 
             <button class="tool-btn"
-                    data-tool="restoration"
-                    data-tab="restorationTab"
+                    data-tool="edges"
+                    data-tab="edgeTab"
                     type="button">
                 <span class="tool-icon">
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8">
-                        <path d="M4 12a8 8 0 1 0 2.3-5.7"/>
-                        <path d="M4 5v5h5"/>
-                        <path d="M9 12h6m-3-3v6"/>
+                        <path d="m4 18 5-12 4 12 3-8 4 8"/>
                     </svg>
                 </span>
                 <span class="tool-copy">
-                    <strong>Image Restoration (Deblur)</strong>
-                    <small>Reverse blur</small>
+                    <strong>Edge Maps</strong>
+                    <small>Directional detection</small>
                 </span>
             </button>
             <button class="tool-btn" data-tool="noise" data-tab="noiseTab" type="button">
@@ -1677,11 +1677,11 @@
                     </p>
                 </article>
 
-                <article class="feature-card" data-open-tool="edges">
-                    <strong>Directional Edge Maps</strong>
+                <article class="feature-card" data-open-tool="restoration">
+                    <strong>Image Restoration (Deblur)</strong>
                     <p>
-                        Compare horizontal, vertical and combined responses
-                        using classical edge operators.
+                        Recover detail from Gaussian or motion blur using
+                        regularized Wiener deconvolution.
                     </p>
                 </article>
 
@@ -1698,11 +1698,11 @@
                     <strong>Noise Studio</strong>
                     <p>Add Gaussian or salt-and-pepper noise, or clean a noisy image with median and mean filters.</p>
                 </article>
-                <article class="feature-card" data-open-tool="restoration">
-                    <strong>Image Restoration (Deblur)</strong>
+                <article class="feature-card" data-open-tool="edges">
+                    <strong>Directional Edge Maps</strong>
                     <p>
-                        Recover detail from Gaussian or motion blur using
-                        regularized Wiener deconvolution.
+                        Compare horizontal, vertical and combined responses
+                        using classical edge operators.
                     </p>
                 </article>
             </div>
@@ -4134,3 +4134,4 @@
 <script src="{{ url_for('static', filename='js/fourier.js') }}"></script>
 </body>
 </html>
+
